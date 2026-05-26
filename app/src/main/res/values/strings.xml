@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">ScreenPact</string>
+
+    <!-- Device Admin -->
+    <string name="device_admin_label">ScreenPact Device Admin</string>
+    <string name="device_admin_description">Allows ScreenPact to lock the screen when a time limit is reached and prevent uninstall without guardian approval.</string>
+
+    <!-- Accessibility Service -->
+    <string name="accessibility_service_label">ScreenPact App Blocker</string>
+    <string name="accessibility_service_description">Detects when a time-limited app is opened and displays the lock screen to enforce guardian-approved limits.</string>
+
+    <!-- Activity Blocked -->
+    <string name="warning_icon">Warning icon</string>
+    <string name="blocked_app_icon">Blocked app icon</string>
+    <string name="blocked_message_times_up">Time\'s up</string>
+    <string name="btn_go_back">Go Back</string>
+    <string name="btn_request_extra_time">Request Extra Time</string>
+</resources>

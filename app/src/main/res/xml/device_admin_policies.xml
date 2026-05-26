@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Declares which Device Administration policies ScreenPact requires.
+    force-lock: allows the app to lock the screen immediately when a time
+    limit is reached and to block uninstall until the guardian approves.
+-->
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-policies>
+        <force-lock />
+    </uses-policies>
+</device-admin>

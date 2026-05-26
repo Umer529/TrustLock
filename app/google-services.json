@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "832606267550",
+    "project_id": "trust-77",
+    "storage_bucket": "trust-77.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832606267550:android:b33cdde729c00b3916738f",
+        "android_client_info": {
+          "package_name": "com.example.trustlock"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAv7uGtzXcksP9vLj2AJaK8_3j9WRRA4yE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

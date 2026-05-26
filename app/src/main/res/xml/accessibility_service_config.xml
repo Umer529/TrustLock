@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Configuration for AppBlockingAccessibilityService.
+
+    typeWindowStateChanged  — fires when the foreground Activity changes,
+                              which is the primary signal for detecting app switches.
+    typeWindowContentChanged — fires when window content updates; included so the
+                              service can re-evaluate the foreground state on in-app
+                              navigation (e.g. WebView-based apps that never leave
+                              the same Activity).
+
+    canRetrieveWindowContent="false" — we only need to know WHICH app is in the
+    foreground, not read its view hierarchy. Keeping this false reduces battery
+    impact and satisfies privacy requirements.
+
+    packageNames is omitted intentionally — the service must observe all packages
+    to detect when a time-limited app becomes foreground.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:canRetrieveWindowContent="false"
+    android:description="@string/accessibility_service_description"
+    android:notificationTimeout="100" />
