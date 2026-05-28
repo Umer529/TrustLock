@@ -9,6 +9,7 @@ import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.PATCH;
@@ -33,6 +34,10 @@ public interface SupabaseDbApi {
 
     @POST("rest/v1/app_limits")
     Call<Void> upsertAppLimit(@Header("Prefer") String prefer, @Body AppLimit limit);
+
+    @DELETE("rest/v1/app_limits")
+    Call<Void> deleteAppLimit(@Query("user_id") String userIdEq,
+                              @Query("package_name") String packageNameEq);
 
     // ── Approval Requests ──────────────────────────────────────────────────────
 

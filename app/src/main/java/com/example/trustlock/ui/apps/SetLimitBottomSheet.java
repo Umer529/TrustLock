@@ -19,7 +19,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 public class SetLimitBottomSheet extends BottomSheetDialogFragment {
 
     private static final String ARG_PACKAGE = "packageName";
-    private static final String ARG_NAME = "appName";
+    private static final String ARG_NAME    = "appName";
     private static final String ARG_CURRENT = "currentMinutes";
 
     public static SetLimitBottomSheet newInstance(String packageName, String appName,
@@ -27,8 +27,8 @@ public class SetLimitBottomSheet extends BottomSheetDialogFragment {
         SetLimitBottomSheet sheet = new SetLimitBottomSheet();
         Bundle args = new Bundle();
         args.putString(ARG_PACKAGE, packageName);
-        args.putString(ARG_NAME, appName);
-        args.putInt(ARG_CURRENT, currentLimitMinutes);
+        args.putString(ARG_NAME,    appName);
+        args.putInt(ARG_CURRENT,    currentLimitMinutes);
         sheet.setArguments(args);
         return sheet;
     }
@@ -47,57 +47,53 @@ public class SetLimitBottomSheet extends BottomSheetDialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Bundle args = requireArguments();
-        String packageName = args.getString(ARG_PACKAGE);
-        String appName = args.getString(ARG_NAME);
-        int currentMinutes = args.getInt(ARG_CURRENT, 0);
+        Bundle args          = requireArguments();
+        String packageName   = args.getString(ARG_PACKAGE);
+        String appName       = args.getString(ARG_NAME);
+        int    currentMinutes = args.getInt(ARG_CURRENT, 0);
 
-        // ViewModel is scoped to the host Activity so it shares state with AddAppLimitActivity
-        AppLimitViewModel viewModel = new ViewModelProvider(requireActivity())
-                .get(AppLimitViewModel.class);
+        AppLimitViewModel viewModel =
+                new ViewModelProvider(requireActivity()).get(AppLimitViewModel.class);
 
         binding.tvSheetAppName.setText(appName);
 
-        // Configure pickers
         binding.npHours.setMinValue(0);
         binding.npHours.setMaxValue(12);
         binding.npMinutes.setMinValue(0);
         binding.npMinutes.setMaxValue(59);
-
-        // Pre-select current limit values if editing
         binding.npHours.setValue(currentMinutes / 60);
         binding.npMinutes.setValue(currentMinutes % 60);
 
-        // NumberPicker text is dark by default — force white for dark theme
-        applyPickerTextColor(binding.npHours, android.graphics.Color.WHITE);
-        applyPickerTextColor(binding.npMinutes, android.graphics.Color.WHITE);
+        applyPickerTextColor(binding.npHours,    android.graphics.Color.WHITE);
+        applyPickerTextColor(binding.npMinutes,  android.graphics.Color.WHITE);
+
+        // Show "Remove limit" only when an existing limit is being edited
+        if (currentMinutes > 0) {
+            binding.btnRemoveLimit.setVisibility(View.VISIBLE);
+            binding.btnRemoveLimit.setOnClickListener(v -> {
+                viewModel.deleteLimit(packageName);
+                dismiss();
+            });
+        }
 
         binding.btnSetLimit.setOnClickListener(v -> {
-            int hours = binding.npHours.getValue();
-            int minutes = binding.npMinutes.getValue();
-            int totalMinutes = hours * 60 + minutes;
-
+            int totalMinutes = binding.npHours.getValue() * 60 + binding.npMinutes.getValue();
             if (totalMinutes == 0) {
-                binding.btnSetLimit.setError("Please set a limit greater than 0");
+                binding.btnSetLimit.setError("Set a limit greater than 0");
                 return;
             }
-
-            AppLimit limit = new AppLimit(packageName, appName, totalMinutes, true);
-            viewModel.requestLimitChange(limit);
+            viewModel.requestLimitChange(new AppLimit(packageName, appName, totalMinutes, true));
             dismiss();
         });
     }
 
-    /**
-     * Forces the NumberPicker's internal EditText to use a specific text color.
-     * NumberPicker ignores theme text colors on many API levels.
-     */
     private void applyPickerTextColor(NumberPicker picker, int color) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             picker.setTextColor(color);
         } else {
             try {
-                java.lang.reflect.Field field = NumberPicker.class.getDeclaredField("mInputText");
+                java.lang.reflect.Field field =
+                        NumberPicker.class.getDeclaredField("mInputText");
                 field.setAccessible(true);
                 android.widget.TextView tv = (android.widget.TextView) field.get(picker);
                 if (tv != null) tv.setTextColor(color);

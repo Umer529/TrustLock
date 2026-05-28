@@ -9,7 +9,8 @@ import com.example.trustlock.util.SessionManager;
 
 public class ScreenPactApp extends Application {
 
-    public static final String CHANNEL_MONITOR = "screen_time_monitor";
+    public static final String CHANNEL_MONITOR   = "screen_time_monitor";
+    public static final String CHANNEL_APPROVALS = "approvals";
 
     @Override
     public void onCreate() {
@@ -28,8 +29,16 @@ public class ScreenPactApp extends Application {
             monitorChannel.setDescription("Persistent notification while ScreenPact monitors usage");
             monitorChannel.setShowBadge(false);
 
+            NotificationChannel approvalChannel = new NotificationChannel(
+                    CHANNEL_APPROVALS,
+                    "Guardian Approvals",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            approvalChannel.setDescription("Notifies when a guardian approves or denies a request");
+
             NotificationManager nm = getSystemService(NotificationManager.class);
             nm.createNotificationChannel(monitorChannel);
+            nm.createNotificationChannel(approvalChannel);
         }
     }
 }

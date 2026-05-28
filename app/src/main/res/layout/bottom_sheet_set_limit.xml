@@ -100,4 +100,13 @@
         android:layout_height="56dp"
         android:text="Set Limit" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRemoveLimit"
+        style="@style/ScreenPact.Button.Secondary"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="12dp"
+        android:text="Remove Limit"
+        android:visibility="gone" />
+
 </LinearLayout>

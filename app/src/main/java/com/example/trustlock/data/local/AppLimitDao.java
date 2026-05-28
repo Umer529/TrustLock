@@ -17,4 +17,7 @@ public interface AppLimitDao {
 
     @Query("SELECT * FROM app_limits WHERE userId = :userId ORDER BY appName ASC")
     List<AppLimitEntity> getForUser(String userId);
+
+    @Query("DELETE FROM app_limits WHERE userId = :userId AND packageName = :packageName")
+    void delete(String userId, String packageName);
 }

@@ -47,6 +47,10 @@ public class LocalRepository {
         executor.execute(() -> limitDao.insert(limit));
     }
 
+    public void deleteLimit(String userId, String packageName) {
+        executor.execute(() -> limitDao.delete(userId, packageName));
+    }
+
     public void getLimits(String userId, Callback<List<AppLimitEntity>> callback) {
         executor.execute(() -> {
             List<AppLimitEntity> limits = limitDao.getForUser(userId);

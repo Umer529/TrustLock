@@ -99,14 +99,17 @@ public class SettingsViewModel extends AndroidViewModel {
         Map<String, Object> payload = new HashMap<>();
         payload.put("reason", "User requested app uninstall");
 
+        String description = "Remove ScreenPact from this device";
         new ApprovalRequestManager().createApprovalRequest(
                 userId, ApprovalRequest.TYPE_UNINSTALL,
-                guardianEmail, payload,
-                "Remove ScreenPact from this device",
+                guardianEmail, payload, description,
                 requestId -> {
                     if (requestId != null) {
-                        pendingApproval.postValue(new PendingApprovalData(
-                                requestId, guardianEmail, "Remove ScreenPact from this device"));
+                        // Persist so the background service can poll even if the dialog is dismissed
+                        SessionManager.getInstance()
+                                .setPendingRequest(requestId, ApprovalRequest.TYPE_UNINSTALL, null);
+                        pendingApproval.postValue(
+                                new PendingApprovalData(requestId, guardianEmail, description));
                     } else {
                         error.postValue("Failed to send approval request");
                     }

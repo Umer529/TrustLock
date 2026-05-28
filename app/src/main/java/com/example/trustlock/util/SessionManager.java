@@ -51,5 +51,30 @@ public class SessionManager {
     public String getPassword()          { return prefs.getString(KEY_PASSWORD, null); }
     public void   setPassword(String v)  { prefs.edit().putString(KEY_PASSWORD, v).apply(); }
 
+    // ── Pending approval request (background polling) ──────────────────────────
+    private static final String KEY_PENDING_ID      = "pending_request_id";
+    private static final String KEY_PENDING_TYPE    = "pending_request_type";
+    private static final String KEY_PENDING_PKG     = "pending_package_name";
+
+    public String getPendingRequestId()           { return prefs.getString(KEY_PENDING_ID,   null); }
+    public String getPendingRequestType()         { return prefs.getString(KEY_PENDING_TYPE, null); }
+    public String getPendingPackageName()         { return prefs.getString(KEY_PENDING_PKG,  null); }
+
+    public void setPendingRequest(String id, String type, String packageName) {
+        prefs.edit()
+                .putString(KEY_PENDING_ID,   id)
+                .putString(KEY_PENDING_TYPE, type)
+                .putString(KEY_PENDING_PKG,  packageName)
+                .apply();
+    }
+
+    public void clearPendingRequest() {
+        prefs.edit()
+                .remove(KEY_PENDING_ID)
+                .remove(KEY_PENDING_TYPE)
+                .remove(KEY_PENDING_PKG)
+                .apply();
+    }
+
     public void clear() { prefs.edit().clear().apply(); }
 }

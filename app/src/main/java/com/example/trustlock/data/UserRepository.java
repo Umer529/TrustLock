@@ -33,14 +33,32 @@ public class UserRepository {
     }
 
     public void saveAppLimit(String userId, AppLimit limit) {
+        saveAppLimit(userId, limit, null);
+    }
+
+    public void saveAppLimit(String userId, AppLimit limit, Runnable onComplete) {
         limit.setUserId(userId);
         db.upsertAppLimit("resolution=merge-duplicates,return=minimal", limit)
                 .enqueue(new Callback<Void>() {
                     @Override public void onResponse(Call<Void> call, Response<Void> r) {
                         if (!r.isSuccessful()) Log.e(TAG, "saveAppLimit failed: " + r.code());
+                        if (onComplete != null) onComplete.run();
                     }
                     @Override public void onFailure(Call<Void> call, Throwable t) {
                         Log.e(TAG, "saveAppLimit error", t);
+                        if (onComplete != null) onComplete.run();
+                    }
+                });
+    }
+
+    public void deleteAppLimit(String userId, String packageName) {
+        db.deleteAppLimit("eq." + userId, "eq." + packageName)
+                .enqueue(new Callback<Void>() {
+                    @Override public void onResponse(Call<Void> call, Response<Void> r) {
+                        if (!r.isSuccessful()) Log.e(TAG, "deleteAppLimit failed: " + r.code());
+                    }
+                    @Override public void onFailure(Call<Void> call, Throwable t) {
+                        Log.e(TAG, "deleteAppLimit error", t);
                     }
                 });
     }

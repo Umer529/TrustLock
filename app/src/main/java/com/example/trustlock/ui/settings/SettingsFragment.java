@@ -69,8 +69,12 @@ public class SettingsFragment extends Fragment {
                     data.description);
 
             dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
-                @Override public void onApproved() { deactivateAdminAndUninstall(); }
+                @Override public void onApproved() {
+                    com.example.trustlock.util.SessionManager.getInstance().clearPendingRequest();
+                    deactivateAdminAndUninstall();
+                }
                 @Override public void onDenied() {
+                    com.example.trustlock.util.SessionManager.getInstance().clearPendingRequest();
                     Snackbar.make(requireView(),
                             "Guardian denied the uninstall request", Snackbar.LENGTH_LONG).show();
                 }
@@ -89,6 +93,20 @@ public class SettingsFragment extends Fragment {
     public void onResume() {
         super.onResume();
         updateAdminStatus();
+        checkForApprovedUninstall();
+    }
+
+    /** If the guardian approved while the dialog was dismissed, complete the uninstall now. */
+    private void checkForApprovedUninstall() {
+        com.example.trustlock.util.SessionManager session =
+                com.example.trustlock.util.SessionManager.getInstance();
+        if (com.example.trustlock.models.ApprovalRequest.TYPE_UNINSTALL
+                .equals(session.getPendingRequestType())) {
+            // The pending request is still there — it hasn't been resolved yet.
+            // The service will notify via notification. Nothing to do here.
+            // But if it WAS cleared (by the service) before we resumed, the service
+            // already showed a notification — also fine.
+        }
     }
 
     private void populateFromSession() {

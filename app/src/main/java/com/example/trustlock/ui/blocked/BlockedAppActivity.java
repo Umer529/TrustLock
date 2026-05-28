@@ -129,11 +129,16 @@ public class BlockedAppActivity extends AppCompatActivity {
                         return;
                     }
 
+                    // Persist so the background service keeps polling if user dismisses the dialog
+                    SessionManager.getInstance()
+                            .setPendingRequest(requestId, ApprovalRequest.TYPE_EXTRA_TIME, packageName);
+
                     WaitingForApprovalDialog dialog = WaitingForApprovalDialog.newInstance(
                             requestId, guardianEmail, description);
                     dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
                         @Override
                         public void onApproved() {
+                            SessionManager.getInstance().clearPendingRequest();
                             blockedAppsManager.unblockApp(packageName);
                             blockedAppsManager.setGracePeriod(packageName, EXTRA_TIME_MINUTES);
                             Toast.makeText(BlockedAppActivity.this,
@@ -144,6 +149,7 @@ public class BlockedAppActivity extends AppCompatActivity {
 
                         @Override
                         public void onDenied() {
+                            SessionManager.getInstance().clearPendingRequest();
                             Toast.makeText(BlockedAppActivity.this,
                                     "Guardian denied extra time.", Toast.LENGTH_LONG).show();
                         }

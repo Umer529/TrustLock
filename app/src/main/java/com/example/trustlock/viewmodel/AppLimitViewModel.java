@@ -2,7 +2,6 @@ package com.example.trustlock.viewmodel;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
 import androidx.annotation.NonNull;
@@ -34,11 +33,8 @@ public class AppLimitViewModel extends AndroidViewModel {
         public final String requestId;
         public final String guardianEmail;
         public final String description;
-
-        PendingApprovalData(String requestId, String guardianEmail, String description) {
-            this.requestId     = requestId;
-            this.guardianEmail = guardianEmail;
-            this.description   = description;
+        PendingApprovalData(String r, String g, String d) {
+            requestId = r; guardianEmail = g; description = d;
         }
     }
 
@@ -46,11 +42,11 @@ public class AppLimitViewModel extends AndroidViewModel {
     private final UserRepository  userRepository;
     private final LocalRepository localRepository;
 
-    private final MutableLiveData<List<AppLimit>>       appLimits       = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<List<AppInfo>>        installedApps   = new MutableLiveData<>();
-    private final MutableLiveData<Boolean>              limitSaved      = new MutableLiveData<>();
-    private final MutableLiveData<PendingApprovalData>  pendingApproval = new MutableLiveData<>();
-    private final MutableLiveData<String>               error           = new MutableLiveData<>();
+    private final MutableLiveData<List<AppLimit>>      appLimits       = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<AppInfo>>       installedApps   = new MutableLiveData<>();
+    private final MutableLiveData<Boolean>             limitSaved      = new MutableLiveData<>();
+    private final MutableLiveData<PendingApprovalData> pendingApproval = new MutableLiveData<>();
+    private final MutableLiveData<String>              error           = new MutableLiveData<>();
 
     private AppLimit pendingNewLimit;
     private String   cachedGuardianEmail;
@@ -64,33 +60,33 @@ public class AppLimitViewModel extends AndroidViewModel {
         loadInstalledApps();
     }
 
-    public LiveData<List<AppLimit>>       getAppLimits()      { return appLimits; }
-    public LiveData<List<AppInfo>>        getInstalledApps()  { return installedApps; }
-    public LiveData<Boolean>              getLimitSaved()     { return limitSaved; }
-    public LiveData<PendingApprovalData>  getPendingApproval(){ return pendingApproval; }
-    public LiveData<String>               getError()          { return error; }
+    public LiveData<List<AppLimit>>      getAppLimits()       { return appLimits; }
+    public LiveData<List<AppInfo>>       getInstalledApps()   { return installedApps; }
+    public LiveData<Boolean>             getLimitSaved()      { return limitSaved; }
+    public LiveData<PendingApprovalData> getPendingApproval() { return pendingApproval; }
+    public LiveData<String>              getError()           { return error; }
+
+    // ─── Load ────────────────────────────────────────────────────────────────
 
     public void loadAppLimits() {
         String userId = SessionManager.getInstance().getUserId();
         if (userId == null) return;
 
-        // Show SQLite cache immediately — works even when offline
         localRepository.getLimits(userId, cached -> {
-            if (cached != null && !cached.isEmpty()) {
+            if (cached != null && !cached.isEmpty())
                 appLimits.postValue(entitiesToModels(cached));
-            }
         });
 
-        // Refresh from Supabase and update cache
         userRepository.fetchAppLimits(userId, remote -> {
             if (remote != null) {
                 appLimits.postValue(remote);
-                if (!remote.isEmpty()) {
+                if (!remote.isEmpty())
                     localRepository.saveLimits(modelsToEntities(remote, userId));
-                }
             }
         });
     }
+
+    // ─── Set / change limit ───────────────────────────────────────────────────
 
     public void requestLimitChange(@NonNull AppLimit newLimit) {
         String userId = SessionManager.getInstance().getUserId();
@@ -114,10 +110,14 @@ public class AppLimitViewModel extends AndroidViewModel {
             pendingNewLimit.setActive(true);
 
             fetchGuardianEmailThen(userId, guardianEmail -> {
-                ApprovalRequestManager manager = new ApprovalRequestManager();
-                manager.createApprovalRequest(userId, ApprovalRequest.TYPE_CHANGE_LIMIT,
+                new ApprovalRequestManager().createApprovalRequest(
+                        userId, ApprovalRequest.TYPE_CHANGE_LIMIT,
                         guardianEmail, payload, desc, requestId -> {
                             if (requestId != null) {
+                                // Store so background service can poll if dialog is dismissed
+                                SessionManager.getInstance().setPendingRequest(
+                                        requestId, ApprovalRequest.TYPE_CHANGE_LIMIT,
+                                        newLimit.getPackageName());
                                 pendingApproval.postValue(
                                         new PendingApprovalData(requestId, guardianEmail, desc));
                             } else {
@@ -127,24 +127,54 @@ public class AppLimitViewModel extends AndroidViewModel {
             });
         } else {
             newLimit.setActive(true);
-            userRepository.saveAppLimit(userId, newLimit);
-            // Also persist locally
-            localRepository.saveLimit(modelToEntity(newLimit, userId));
-            limitSaved.setValue(true);
-            loadAppLimits();
+            // New limit — no guardian approval needed, save immediately
+            String uid = userId;
+            userRepository.saveAppLimit(uid, newLimit, () -> {
+                localRepository.saveLimit(modelToEntity(newLimit, uid));
+                limitSaved.postValue(true);
+                loadAppLimits();
+            });
         }
     }
 
+    /** Called when the WaitingForApprovalDialog reports APPROVED. */
     public void applyPendingLimit() {
         String userId = SessionManager.getInstance().getUserId();
-        if (userId != null && pendingNewLimit != null) {
-            userRepository.saveAppLimit(userId, pendingNewLimit);
-            localRepository.saveLimit(modelToEntity(pendingNewLimit, userId));
-            pendingNewLimit = null;
+        if (userId == null || pendingNewLimit == null) return;
+
+        AppLimit limitToSave = pendingNewLimit;
+        pendingNewLimit = null;
+        SessionManager.getInstance().clearPendingRequest();
+
+        // Save to Supabase first; only then refresh the local cache + LiveData
+        userRepository.saveAppLimit(userId, limitToSave, () -> {
+            localRepository.saveLimit(modelToEntity(limitToSave, userId));
             limitSaved.postValue(true);
             loadAppLimits();
+        });
+    }
+
+    // ─── Delete limit ─────────────────────────────────────────────────────────
+
+    public void deleteLimit(String packageName) {
+        String userId = SessionManager.getInstance().getUserId();
+        if (userId == null) return;
+
+        userRepository.deleteAppLimit(userId, packageName);
+        localRepository.deleteLimit(userId, packageName);
+
+        // Remove from the in-memory list immediately so the UI updates without waiting
+        List<AppLimit> current = appLimits.getValue();
+        if (current != null) {
+            List<AppLimit> updated = new ArrayList<>();
+            for (AppLimit l : current) {
+                if (!packageName.equals(l.getPackageName())) updated.add(l);
+            }
+            appLimits.postValue(updated);
         }
     }
+
+    // ─── Misc ─────────────────────────────────────────────────────────────────
 
     public void clearPendingApproval() { pendingApproval.setValue(null); }
 
@@ -161,7 +191,8 @@ public class AppLimitViewModel extends AndroidViewModel {
         return null;
     }
 
-    private void fetchGuardianEmailThen(String userId, UserRepository.Callback1<String> callback) {
+    private void fetchGuardianEmailThen(String userId,
+                                        UserRepository.Callback1<String> callback) {
         if (cachedGuardianEmail != null) { callback.onResult(cachedGuardianEmail); return; }
         String fromSession = SessionManager.getInstance().getGuardianEmail();
         if (fromSession != null && !fromSession.isEmpty()) {
@@ -180,21 +211,24 @@ public class AppLimitViewModel extends AndroidViewModel {
         return minutes + "m";
     }
 
+    // ─── Installed apps loading ───────────────────────────────────────────────
+
     private void loadInstalledApps() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             PackageManager pm = context.getPackageManager();
-            // getInstalledPackages returns ALL packages; getLaunchIntentForPackage
-            // filters to only apps the user can actually open (have a launcher icon).
-            // This works on all Android versions including 11+ with QUERY_ALL_PACKAGES.
+            android.content.Intent launchIntent =
+                    new android.content.Intent(android.content.Intent.ACTION_MAIN);
+            launchIntent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
+
             List<android.content.pm.PackageInfo> packages = pm.getInstalledPackages(0);
             List<AppInfo> userApps = new ArrayList<>();
             for (android.content.pm.PackageInfo pkg : packages) {
-                String packageName = pkg.packageName;
-                if (packageName.equals(context.getPackageName())) continue;
-                if (pm.getLaunchIntentForPackage(packageName) != null) {
-                    String label = pm.getApplicationLabel(pkg.applicationInfo).toString();
-                    userApps.add(new AppInfo(packageName, label));
+                String pkgName = pkg.packageName;
+                if (pkgName.equals(context.getPackageName())) continue;
+                if (pm.getLaunchIntentForPackage(pkgName) != null) {
+                    userApps.add(new AppInfo(pkgName,
+                            pm.getApplicationLabel(pkg.applicationInfo).toString()));
                 }
             }
             Collections.sort(userApps,
@@ -204,12 +238,12 @@ public class AppLimitViewModel extends AndroidViewModel {
         executor.shutdown();
     }
 
-    // ── Entity / model conversions ─────────────────────────────────────────────
+    // ─── Entity / model conversions ───────────────────────────────────────────
 
     private static AppLimitEntity modelToEntity(AppLimit m, String userId) {
         AppLimitEntity e = new AppLimitEntity();
         e.userId            = userId;
-        e.packageName       = m.getPackageName()       != null ? m.getPackageName()       : "";
+        e.packageName       = m.getPackageName() != null ? m.getPackageName() : "";
         e.appName           = m.getAppName();
         e.dailyLimitMinutes = m.getDailyLimitMinutes();
         e.active            = m.isActive();

@@ -20,21 +20,22 @@ public class WaitingForApprovalDialog extends DialogFragment {
         void onDenied();
     }
 
-    private static final String ARG_REQUEST_ID    = "requestId";
+    private static final String ARG_REQUEST_ID     = "requestId";
     private static final String ARG_GUARDIAN_EMAIL = "guardianEmail";
-    private static final String ARG_DESCRIPTION   = "description";
+    private static final String ARG_DESCRIPTION    = "description";
 
     private DialogWaitingApprovalBinding binding;
-    private ApprovalRequestManager approvalManager;
-    private OnApprovalResultListener resultListener;
+    private ApprovalRequestManager       approvalManager;
+    private OnApprovalResultListener     resultListener;
+    private boolean                      explicitlyCancelled = false;
 
     public static WaitingForApprovalDialog newInstance(
             String requestId, String guardianEmail, String description) {
         WaitingForApprovalDialog dialog = new WaitingForApprovalDialog();
         Bundle args = new Bundle();
-        args.putString(ARG_REQUEST_ID,    requestId);
+        args.putString(ARG_REQUEST_ID,     requestId);
         args.putString(ARG_GUARDIAN_EMAIL, guardianEmail);
-        args.putString(ARG_DESCRIPTION,   description);
+        args.putString(ARG_DESCRIPTION,    description);
         dialog.setArguments(args);
         return dialog;
     }
@@ -49,18 +50,21 @@ public class WaitingForApprovalDialog extends DialogFragment {
         binding = DialogWaitingApprovalBinding.inflate(LayoutInflater.from(requireContext()));
         approvalManager = new ApprovalRequestManager();
 
-        Bundle args = requireArguments();
-        String guardianEmail = args.getString(ARG_GUARDIAN_EMAIL, "your guardian");
-        String description   = args.getString(ARG_DESCRIPTION, "");
+        Bundle args       = requireArguments();
+        String guardian   = args.getString(ARG_GUARDIAN_EMAIL, "your guardian");
+        String desc       = args.getString(ARG_DESCRIPTION, "");
+        String requestId  = args.getString(ARG_REQUEST_ID);
 
-        binding.tvWaitingText.setText("Waiting for " + guardianEmail + " to approve...");
-        binding.tvDescription.setText(description);
+        binding.tvWaitingText.setText("Waiting for " + guardian + " to respond…");
+        binding.tvDescription.setText(desc);
 
         return new MaterialAlertDialogBuilder(requireContext())
                 .setView(binding.getRoot())
-                .setCancelable(false)
-                .setNegativeButton("Cancel", (d, w) -> {
-                    String requestId = args.getString(ARG_REQUEST_ID);
+                // Dismissible — back press just hides the dialog without cancelling the request.
+                // The service continues polling in the background and notifies via notification.
+                .setCancelable(true)
+                .setNegativeButton("Cancel request", (d, w) -> {
+                    explicitlyCancelled = true;
                     if (requestId != null) approvalManager.cancelRequest(requestId);
                 })
                 .create();
@@ -89,6 +93,8 @@ public class WaitingForApprovalDialog extends DialogFragment {
     @Override
     public void onStop() {
         super.onStop();
+        // Only stop the in-dialog polling — the service takes over background polling.
+        // We do NOT cancel the request unless explicitlyCancelled is true.
         approvalManager.stopListening();
     }
 
