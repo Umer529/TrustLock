@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.trustlock.databinding.FragmentStep1Binding;
 import com.example.trustlock.viewmodel.RegistrationViewModel;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class Step1Fragment extends Fragment {
 
@@ -30,16 +31,16 @@ public class Step1Fragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Shared ViewModel scoped to the Activity so all steps share state
         viewModel = new ViewModelProvider(requireActivity()).get(RegistrationViewModel.class);
 
-        // Restore previously entered values
         binding.etName.setText(viewModel.getName().getValue());
         binding.etEmail.setText(viewModel.getEmail().getValue());
+        binding.etPassword.setText(viewModel.getPassword().getValue());
 
         binding.btnNext.setOnClickListener(v -> {
-            String name = getText(binding.etName);
-            String email = getText(binding.etEmail);
+            String name     = getFieldText(binding.etName);
+            String email    = getFieldText(binding.etEmail);
+            String pass     = getFieldText(binding.etPassword);
 
             if (TextUtils.isEmpty(name)) {
                 binding.tilName.setError("Name is required");
@@ -53,13 +54,20 @@ public class Step1Fragment extends Fragment {
             }
             binding.tilEmail.setError(null);
 
+            if (pass.length() < 6) {
+                binding.tilPassword.setError("Password must be at least 6 characters");
+                return;
+            }
+            binding.tilPassword.setError(null);
+
             viewModel.setName(name);
             viewModel.setEmail(email);
+            viewModel.setPassword(pass);
             ((RegistrationActivity) requireActivity()).goToPage(1);
         });
     }
 
-    private String getText(com.google.android.material.textfield.TextInputEditText et) {
+    private String getFieldText(TextInputEditText et) {
         return et.getText() != null ? et.getText().toString().trim() : "";
     }
 

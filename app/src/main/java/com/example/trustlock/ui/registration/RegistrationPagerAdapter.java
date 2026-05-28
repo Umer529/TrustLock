@@ -17,13 +17,12 @@ public class RegistrationPagerAdapter extends FragmentStateAdapter {
         switch (position) {
             case 0: return new Step1Fragment();
             case 1: return new Step2Fragment();
-            case 2: return new Step3Fragment();
             default: throw new IllegalArgumentException("Invalid page: " + position);
         }
     }
 
     @Override
     public int getItemCount() {
-        return 3;
+        return 2;
     }
 }

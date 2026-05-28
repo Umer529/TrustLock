@@ -15,49 +15,45 @@ import androidx.core.app.NotificationCompat;
 import com.example.trustlock.MainActivity;
 import com.example.trustlock.R;
 import com.example.trustlock.ScreenPactApp;
+import com.example.trustlock.data.SupabaseClient;
 import com.example.trustlock.models.AppLimit;
 import com.example.trustlock.util.BlockedAppsManager;
+import com.example.trustlock.util.SessionManager;
 import com.example.trustlock.util.UsageStatsHelper;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-// Hilt temporarily disabled — remove Hilt annotations/imports so project can build
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class ScreenTimeMonitorService extends Service {
 
-    private static final String TAG = "ScreenTimeMonitor";
-    private static final int NOTIFICATION_ID = 1001;
-    private static final long INTERVAL_MS = 60_000L; // 60 seconds
+    private static final String TAG             = "ScreenTimeMonitor";
+    private static final int    NOTIFICATION_ID = 1001;
+    private static final long   INTERVAL_MS     = 60_000L;
+    private static final int    LIMITS_REFRESH_TICKS = 5; // refresh limits every 5 minutes
 
-    private FirebaseAuth auth;
-    private FirebaseFirestore db;
-
-    private Handler handler;
-    private Runnable monitorRunnable;
-    private ListenerRegistration limitsListener;
+    private Handler          handler;
+    private Runnable         monitorRunnable;
     private BlockedAppsManager blockedAppsManager;
 
-    /** Local cache of packageName → limitMinutes, kept fresh by a Firestore listener. */
+    /** packageName → limitMinutes, refreshed from Supabase every LIMITS_REFRESH_TICKS ticks. */
     private final Map<String, Integer> limitsCache = new HashMap<>();
+    private int tickCount = 0;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
         blockedAppsManager = new BlockedAppsManager(this);
         handler = new Handler(Looper.getMainLooper());
         monitorRunnable = new Runnable() {
-            @Override
-            public void run() {
+            @Override public void run() {
                 tick();
                 handler.postDelayed(this, INTERVAL_MS);
             }
@@ -67,37 +63,32 @@ public class ScreenTimeMonitorService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(NOTIFICATION_ID, buildNotification());
-        startLimitsListener();
-        handler.post(monitorRunnable); // First tick immediately, then every 60 s
-        return START_STICKY; // System will restart the service if it is killed
+        refreshLimitsCache();
+        handler.post(monitorRunnable);
+        return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         handler.removeCallbacks(monitorRunnable);
-        if (limitsListener != null) {
-            limitsListener.remove();
-        }
     }
 
     @Nullable
     @Override
-    public IBinder onBind(Intent intent) {
-        return null; // Not a bound service
-    }
+    public IBinder onBind(Intent intent) { return null; }
 
     // ─── Core logic ──────────────────────────────────────────────────────────
 
     private void tick() {
+        tickCount++;
+        if (tickCount % LIMITS_REFRESH_TICKS == 0) {
+            refreshLimitsCache();
+        }
         checkMidnightReset();
         checkUsageAndEnforce();
     }
 
-    /**
-     * Compares today's foreground usage against stored limits.
-     * Blocks apps that are over their limit; unblocks apps that are under.
-     */
     private void checkUsageAndEnforce() {
         if (limitsCache.isEmpty()) return;
 
@@ -109,10 +100,11 @@ public class ScreenTimeMonitorService extends Service {
             long usedMinutes = usageMap.containsKey(pkg) ? usageMap.get(pkg) : 0L;
 
             if (usedMinutes >= limitMinutes) {
-                blockedAppsManager.blockApp(pkg, limitMinutes);
-                Log.d(TAG, "Blocked: " + pkg + " (" + usedMinutes + "/" + limitMinutes + " min)");
+                if (!blockedAppsManager.isInGracePeriod(pkg)) {
+                    blockedAppsManager.blockApp(pkg, limitMinutes);
+                    Log.d(TAG, "Blocked: " + pkg + " (" + usedMinutes + "/" + limitMinutes + " min)");
+                }
             } else {
-                // Unblock if it was previously blocked and usage has dropped (e.g. after midnight reset)
                 if (blockedAppsManager.isBlocked(pkg)) {
                     blockedAppsManager.unblockApp(pkg);
                 }
@@ -120,10 +112,6 @@ public class ScreenTimeMonitorService extends Service {
         }
     }
 
-    /**
-     * On the first tick of a new calendar day, resets all blocked-app state so
-     * limits are evaluated fresh from midnight.
-     */
     private void checkMidnightReset() {
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
         if (!today.equals(blockedAppsManager.getLastResetDate())) {
@@ -133,37 +121,30 @@ public class ScreenTimeMonitorService extends Service {
         }
     }
 
-    // ─── Firestore limits listener ────────────────────────────────────────────
+    // ─── Supabase limits refresh ──────────────────────────────────────────────
 
-    /**
-     * Keeps limitsCache in sync with Firestore in real time so the monitor always
-     * enforces the most up-to-date guardian-approved limits without polling Firestore.
-     */
-    private void startLimitsListener() {
-        FirebaseUser user = auth.getCurrentUser();
-        if (user == null) {
-            Log.w(TAG, "No authenticated user — limits listener not started");
-            return;
-        }
+    private void refreshLimitsCache() {
+        String userId = SessionManager.getInstance().getUserId();
+        if (userId == null) return;
 
-        limitsListener = db.collection("users")
-                .document(user.getUid())
-                .collection("appLimits")
-                .addSnapshotListener((snapshots, error) -> {
-                    if (error != null) {
-                        Log.e(TAG, "Limits listener error", error);
-                        return;
-                    }
-                    if (snapshots == null) return;
-
-                    limitsCache.clear();
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        AppLimit limit = doc.toObject(AppLimit.class);
-                        if (limit.isActive() && limit.getDailyLimitMinutes() > 0) {
-                            limitsCache.put(limit.getPackageName(), limit.getDailyLimitMinutes());
+        SupabaseClient.getInstance().db()
+                .getAppLimits("eq." + userId, "app_name.asc")
+                .enqueue(new Callback<List<AppLimit>>() {
+                    @Override public void onResponse(Call<List<AppLimit>> call,
+                                                     Response<List<AppLimit>> r) {
+                        if (!r.isSuccessful() || r.body() == null) return;
+                        limitsCache.clear();
+                        for (AppLimit limit : r.body()) {
+                            if (limit.isActive() && limit.getDailyLimitMinutes() > 0) {
+                                limitsCache.put(limit.getPackageName(),
+                                        limit.getDailyLimitMinutes());
+                            }
                         }
+                        Log.d(TAG, "Limits cache refreshed: " + limitsCache.size() + " entries");
                     }
-                    Log.d(TAG, "Limits cache refreshed: " + limitsCache.size() + " entries");
+                    @Override public void onFailure(Call<List<AppLimit>> call, Throwable t) {
+                        Log.e(TAG, "refreshLimitsCache error", t);
+                    }
                 });
     }
 

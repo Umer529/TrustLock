@@ -1,41 +1,45 @@
 package com.example.trustlock.models;
 
-import com.google.firebase.firestore.PropertyName;
+import com.google.gson.annotations.SerializedName;
 
 public class AppLimit {
 
+    @SerializedName("user_id")
+    private String userId;
+
+    @SerializedName("package_name")
     private String packageName;
+
+    @SerializedName("app_name")
     private String appName;
+
+    @SerializedName("daily_limit_minutes")
     private int dailyLimitMinutes;
 
-    // Firestore's Java deserialization strips the "is" prefix from boolean getters,
-    // storing the field as "active" in the database unless we annotate explicitly.
-    // @PropertyName keeps the Firestore field name consistent with this model.
-    @PropertyName("isActive")
+    @SerializedName("is_active")
     private boolean active;
 
-    /** Required by Firestore for deserialization. */
     public AppLimit() {}
 
     public AppLimit(String packageName, String appName, int dailyLimitMinutes, boolean active) {
-        this.packageName = packageName;
-        this.appName = appName;
+        this.packageName       = packageName;
+        this.appName           = appName;
         this.dailyLimitMinutes = dailyLimitMinutes;
-        this.active = active;
+        this.active            = active;
     }
 
-    public String getPackageName() { return packageName; }
-    public void setPackageName(String packageName) { this.packageName = packageName; }
+    public String getUserId()          { return userId; }
+    public void   setUserId(String v)  { userId = v; }
 
-    public String getAppName() { return appName; }
-    public void setAppName(String appName) { this.appName = appName; }
+    public String getPackageName()          { return packageName; }
+    public void   setPackageName(String v)  { packageName = v; }
 
-    public int getDailyLimitMinutes() { return dailyLimitMinutes; }
-    public void setDailyLimitMinutes(int dailyLimitMinutes) { this.dailyLimitMinutes = dailyLimitMinutes; }
+    public String getAppName()          { return appName; }
+    public void   setAppName(String v)  { appName = v; }
 
-    @PropertyName("isActive")
-    public boolean isActive() { return active; }
+    public int  getDailyLimitMinutes()      { return dailyLimitMinutes; }
+    public void setDailyLimitMinutes(int v) { dailyLimitMinutes = v; }
 
-    @PropertyName("isActive")
-    public void setActive(boolean active) { this.active = active; }
+    public boolean isActive()          { return active; }
+    public void    setActive(boolean v){ active = v; }
 }

@@ -5,18 +5,16 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 
-// Hilt temporarily disabled for AGP 9 compatibility
-// import dagger.hilt.android.HiltAndroidApp;
+import com.example.trustlock.util.SessionManager;
 
-// @HiltAndroidApp
 public class ScreenPactApp extends Application {
 
-    /** Notification channel used by ScreenTimeMonitorService's persistent notification. */
     public static final String CHANNEL_MONITOR = "screen_time_monitor";
 
     @Override
     public void onCreate() {
         super.onCreate();
+        SessionManager.init(this);
         createNotificationChannels();
     }
 
@@ -25,7 +23,7 @@ public class ScreenPactApp extends Application {
             NotificationChannel monitorChannel = new NotificationChannel(
                     CHANNEL_MONITOR,
                     "Screen Time Monitor",
-                    NotificationManager.IMPORTANCE_LOW  // Silent — just stays in the shade
+                    NotificationManager.IMPORTANCE_LOW
             );
             monitorChannel.setDescription("Persistent notification while ScreenPact monitors usage");
             monitorChannel.setShowBadge(false);

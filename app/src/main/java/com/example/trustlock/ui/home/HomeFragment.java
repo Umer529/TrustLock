@@ -36,25 +36,40 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(AppLimitViewModel.class);
+        // Activity-scoped so HomeFragment, AppsFragment and SetLimitBottomSheet share one instance
+        viewModel = new ViewModelProvider(requireActivity()).get(AppLimitViewModel.class);
 
         setupRecyclerView();
         observeViewModel();
 
         binding.fabAddApp.setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), AddAppLimitActivity.class)));
+
+        binding.swipeRefresh.setColorSchemeResources(
+                com.example.trustlock.R.color.purple_primary);
+        binding.swipeRefresh.setOnRefreshListener(() -> {
+            viewModel.loadAppLimits();
+        });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh usage stats every time the user navigates back to this tab
+        viewModel.loadAppLimits();
     }
 
     private void setupRecyclerView() {
         adapter = new AppLimitAdapter(this::onEditApp);
         binding.rvAppLimits.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvAppLimits.setAdapter(adapter);
-        // RecyclerView is inside NestedScrollView — disable its own scrolling
         binding.rvAppLimits.setNestedScrollingEnabled(false);
     }
 
     private void observeViewModel() {
         viewModel.getAppLimits().observe(getViewLifecycleOwner(), limits -> {
+            binding.swipeRefresh.setRefreshing(false);
+
             boolean isEmpty = limits == null || limits.isEmpty();
             binding.rvAppLimits.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
             binding.emptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
@@ -75,17 +90,17 @@ public class HomeFragment extends Fragment {
             totalMinutes += viewModel.getTodayUsageMinutes(limit.getPackageName());
         }
         long hours = totalMinutes / 60;
-        long mins = totalMinutes % 60;
+        long mins  = totalMinutes % 60;
         binding.tvTotalTime.setText(hours + " hrs " + mins + " min");
-        binding.tvTrackingCount.setText("Tracking " + limits.size() + " app" + (limits.size() == 1 ? "" : "s"));
+        binding.tvTrackingCount.setText(
+                "Tracking " + limits.size() + " app" + (limits.size() == 1 ? "" : "s"));
     }
 
     private void onEditApp(AppLimit limit) {
-        // Open AddAppLimitActivity in edit mode, pre-selecting the app
         Intent intent = new Intent(requireContext(), AddAppLimitActivity.class);
-        intent.putExtra(AddAppLimitActivity.EXTRA_EDIT_PACKAGE, limit.getPackageName());
-        intent.putExtra(AddAppLimitActivity.EXTRA_EDIT_APP_NAME, limit.getAppName());
-        intent.putExtra(AddAppLimitActivity.EXTRA_CURRENT_LIMIT, limit.getDailyLimitMinutes());
+        intent.putExtra(AddAppLimitActivity.EXTRA_EDIT_PACKAGE,    limit.getPackageName());
+        intent.putExtra(AddAppLimitActivity.EXTRA_EDIT_APP_NAME,   limit.getAppName());
+        intent.putExtra(AddAppLimitActivity.EXTRA_CURRENT_LIMIT,   limit.getDailyLimitMinutes());
         startActivity(intent);
     }
 

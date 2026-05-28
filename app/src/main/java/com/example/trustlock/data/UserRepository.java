@@ -2,176 +2,93 @@ package com.example.trustlock.data;
 
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-
 import com.example.trustlock.models.AppLimit;
-import com.example.trustlock.models.ApprovalRequest;
 import com.example.trustlock.models.User;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class UserRepository {
 
     private static final String TAG = "UserRepository";
+    private final SupabaseDbApi db = SupabaseClient.getInstance().db();
 
-    private final FirebaseFirestore db;
-
-    public UserRepository(FirebaseFirestore db) {
-        this.db = db;
+    public interface Callback1<T> {
+        void onResult(T result);
     }
 
-    // ─── Write operations ────────────────────────────────────────────────────
-
-    public void saveUser(@NonNull User user) {
-        db.collection(FirestoreCollections.USERS)
-                .document(user.getUid())
-                .set(user)
-                .addOnFailureListener(e -> Log.e(TAG, "saveUser failed", e));
+    public void saveUser(User user) {
+        db.insertUser("return=minimal", user).enqueue(new Callback<Void>() {
+            @Override public void onResponse(Call<Void> call, Response<Void> r) {
+                if (!r.isSuccessful()) Log.e(TAG, "saveUser failed: " + r.code());
+            }
+            @Override public void onFailure(Call<Void> call, Throwable t) {
+                Log.e(TAG, "saveUser error", t);
+            }
+        });
     }
 
-    public void saveAppLimit(@NonNull String uid, @NonNull AppLimit limit) {
-        db.collection(FirestoreCollections.USERS)
-                .document(uid)
-                .collection(FirestoreCollections.APP_LIMITS)
-                .document(limit.getPackageName())
-                .set(limit)
-                .addOnFailureListener(e -> Log.e(TAG, "saveAppLimit failed", e));
+    public void saveAppLimit(String userId, AppLimit limit) {
+        limit.setUserId(userId);
+        db.upsertAppLimit("resolution=merge-duplicates,return=minimal", limit)
+                .enqueue(new Callback<Void>() {
+                    @Override public void onResponse(Call<Void> call, Response<Void> r) {
+                        if (!r.isSuccessful()) Log.e(TAG, "saveAppLimit failed: " + r.code());
+                    }
+                    @Override public void onFailure(Call<Void> call, Throwable t) {
+                        Log.e(TAG, "saveAppLimit error", t);
+                    }
+                });
     }
 
-    /**
-     * Writes an ApprovalRequest. Firestore auto-generates the document ID and
-     * writes it back into the {@code id} field so guardians can query by ID.
-     */
-    public void createApprovalRequest(@NonNull ApprovalRequest request) {
-        DocumentReference ref = db.collection(FirestoreCollections.APPROVAL_REQUESTS).document();
-        request.setId(ref.getId());
-        ref.set(request)
-                .addOnFailureListener(e -> Log.e(TAG, "createApprovalRequest failed", e));
+    public void fetchAppLimits(String userId, Callback1<List<AppLimit>> callback) {
+        db.getAppLimits("eq." + userId, "app_name.asc")
+                .enqueue(new Callback<List<AppLimit>>() {
+                    @Override public void onResponse(Call<List<AppLimit>> call,
+                                                     Response<List<AppLimit>> r) {
+                        callback.onResult(r.isSuccessful() && r.body() != null
+                                ? r.body() : new ArrayList<>());
+                    }
+                    @Override public void onFailure(Call<List<AppLimit>> call, Throwable t) {
+                        Log.e(TAG, "fetchAppLimits error", t);
+                        callback.onResult(new ArrayList<>());
+                    }
+                });
     }
 
-    // ─── Read operations (real-time LiveData) ────────────────────────────────
-
-    /**
-     * Returns a LiveData that emits the latest User snapshot.
-     * The Firestore listener is active only while there is at least one observer,
-     * and is removed automatically when there are none (avoids leaks).
-     */
-    public LiveData<User> getUser(@NonNull String uid) {
-        DocumentReference ref = db.collection(FirestoreCollections.USERS).document(uid);
-        return new DocumentLiveData<>(ref, User.class);
-    }
-
-    /**
-     * Returns a LiveData that emits the full list of AppLimits for a user
-     * every time the subcollection changes.
-     */
-    public LiveData<List<AppLimit>> getAppLimits(@NonNull String uid) {
-        Query query = db.collection(FirestoreCollections.USERS)
-                .document(uid)
-                .collection(FirestoreCollections.APP_LIMITS);
-        return new QueryLiveData<>(query, AppLimit.class);
-    }
-
-    /**
-     * Returns a LiveData that streams status updates for a single ApprovalRequest.
-     * Useful for polling the guardian's APPROVED / DENIED response in real time.
-     */
-    public LiveData<ApprovalRequest> listenToApprovalRequest(@NonNull String requestId) {
-        DocumentReference ref = db.collection(FirestoreCollections.APPROVAL_REQUESTS)
-                .document(requestId);
-        return new DocumentLiveData<>(ref, ApprovalRequest.class);
-    }
-
-    // ─── Lifecycle-aware Firestore LiveData helpers ──────────────────────────
-
-    /**
-     * LiveData backed by a single Firestore document.
-     * Attaches a real-time listener on {@link #onActive()} and detaches it on
-     * {@link #onInactive()}, so it never leaks a listener after the last observer
-     * is removed.
-     */
-    private static final class DocumentLiveData<T> extends LiveData<T> {
-
-        private final DocumentReference ref;
-        private final Class<T> type;
-        private ListenerRegistration registration;
-
-        DocumentLiveData(DocumentReference ref, Class<T> type) {
-            this.ref = ref;
-            this.type = type;
-        }
-
-        @Override
-        protected void onActive() {
-            registration = ref.addSnapshotListener((snapshot, error) -> {
-                if (error != null) {
-                    Log.w(TAG, "Document listen failed: " + ref.getPath(), error);
-                    return;
-                }
-                if (snapshot != null && snapshot.exists()) {
-                    postValue(snapshot.toObject(type));
+    public void fetchUser(String userId, Callback1<User> callback) {
+        db.getUser("eq." + userId).enqueue(new Callback<List<User>>() {
+            @Override public void onResponse(Call<List<User>> call, Response<List<User>> r) {
+                if (r.isSuccessful() && r.body() != null && !r.body().isEmpty()) {
+                    callback.onResult(r.body().get(0));
                 } else {
-                    postValue(null);
+                    callback.onResult(null);
                 }
-            });
-        }
-
-        @Override
-        protected void onInactive() {
-            if (registration != null) {
-                registration.remove();
-                registration = null;
             }
-        }
+            @Override public void onFailure(Call<List<User>> call, Throwable t) {
+                Log.e(TAG, "fetchUser error", t);
+                callback.onResult(null);
+            }
+        });
     }
 
-    /**
-     * LiveData backed by a Firestore collection query.
-     * Follows the same attach/detach lifecycle as {@link DocumentLiveData}.
-     */
-    private static final class QueryLiveData<T> extends LiveData<List<T>> {
-
-        private final Query query;
-        private final Class<T> type;
-        private ListenerRegistration registration;
-
-        QueryLiveData(Query query, Class<T> type) {
-            this.query = query;
-            this.type = type;
-        }
-
-        @Override
-        protected void onActive() {
-            registration = query.addSnapshotListener((snapshots, error) -> {
-                if (error != null) {
-                    Log.w(TAG, "Query listen failed", error);
-                    return;
+    public void fetchGuardianEmail(String userId, Callback1<String> callback) {
+        db.getUser("eq." + userId).enqueue(new Callback<List<User>>() {
+            @Override public void onResponse(Call<List<User>> call, Response<List<User>> r) {
+                if (r.isSuccessful() && r.body() != null && !r.body().isEmpty()) {
+                    callback.onResult(r.body().get(0).getGuardianEmail());
+                } else {
+                    callback.onResult(null);
                 }
-                if (snapshots == null) return;
-
-                List<T> items = new ArrayList<>(snapshots.size());
-                for (QueryDocumentSnapshot doc : snapshots) {
-                    T item = doc.toObject(type);
-                    items.add(item);
-                }
-                postValue(items);
-            });
-        }
-
-        @Override
-        protected void onInactive() {
-            if (registration != null) {
-                registration.remove();
-                registration = null;
             }
-        }
+            @Override public void onFailure(Call<List<User>> call, Throwable t) {
+                Log.e(TAG, "fetchGuardianEmail error", t);
+                callback.onResult(null);
+            }
+        });
     }
 }

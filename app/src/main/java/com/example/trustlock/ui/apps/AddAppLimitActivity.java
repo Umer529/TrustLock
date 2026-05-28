@@ -5,7 +5,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -13,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.trustlock.databinding.ActivityAddAppLimitBinding;
 import com.example.trustlock.models.AppInfo;
 import com.example.trustlock.models.AppLimit;
+import com.example.trustlock.ui.approval.WaitingForApprovalDialog;
 import com.example.trustlock.viewmodel.AppLimitViewModel;
 
 import java.util.HashSet;
@@ -93,10 +93,27 @@ public class AddAppLimitActivity extends AppCompatActivity {
             }
         });
 
-        viewModel.getPendingRequestId().observe(this, requestId -> {
-            if (requestId != null) {
-                showApprovalPendingDialog();
-            }
+        viewModel.getPendingApproval().observe(this, data -> {
+            if (data == null) return;
+            viewModel.clearPendingApproval();
+
+            WaitingForApprovalDialog dialog = WaitingForApprovalDialog.newInstance(
+                    data.requestId, data.guardianEmail, data.description);
+            dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
+                @Override
+                public void onApproved() {
+                    viewModel.applyPendingLimit();
+                    showSuccessAndFinish();
+                }
+                @Override
+                public void onDenied() {
+                    com.google.android.material.snackbar.Snackbar
+                            .make(binding.getRoot(), "Request denied by guardian",
+                                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                            .show();
+                }
+            });
+            dialog.show(getSupportFragmentManager(), "waiting_approval");
         });
 
         viewModel.getError().observe(this, errorMsg -> {
@@ -134,16 +151,6 @@ public class AddAppLimitActivity extends AppCompatActivity {
                 .make(binding.getRoot(), "Limit saved!", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
                 .show();
         binding.getRoot().postDelayed(this::finish, 800);
-    }
-
-    private void showApprovalPendingDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Approval requested")
-                .setMessage("A notification has been sent to your guardian. "
-                        + "The limit will change once they approve.")
-                .setPositiveButton("OK", (d, w) -> finish())
-                .setCancelable(false)
-                .show();
     }
 
     private Set<String> buildLimitedSet(List<AppLimit> limits) {

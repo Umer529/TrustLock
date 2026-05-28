@@ -1,49 +1,46 @@
 package com.example.trustlock.models;
 
-import com.google.firebase.firestore.ServerTimestamp;
-
-import java.util.Date;
+import com.google.gson.annotations.SerializedName;
 
 public class User {
 
+    @SerializedName("id")
     private String uid;
+
+    @SerializedName("name")
     private String name;
+
+    @SerializedName("email")
     private String email;
+
+    @SerializedName("guardian_email")
     private String guardianEmail;
+
+    @SerializedName("fcm_token")
     private String fcmToken;
 
-    // Firestore fills this in automatically on the first write.
-    @ServerTimestamp
-    private Date createdAt;
-
-    /** Required by Firestore for deserialization. */
     public User() {}
 
-    public User(String uid, String name, String email, String guardianEmail,
-                String fcmToken, Date createdAt) {
-        this.uid = uid;
-        this.name = name;
-        this.email = email;
+    public User(String uid, String name, String email, String guardianEmail, String fcmToken) {
+        this.uid           = uid;
+        this.name          = name;
+        this.email         = email;
         this.guardianEmail = guardianEmail;
-        this.fcmToken = fcmToken;
-        this.createdAt = createdAt;
+        this.fcmToken      = fcmToken;
     }
 
-    public String getUid() { return uid; }
-    public void setUid(String uid) { this.uid = uid; }
+    public String getUid()          { return uid; }
+    public void   setUid(String v)  { uid = v; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getName()          { return name; }
+    public void   setName(String v)  { name = v; }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getEmail()          { return email; }
+    public void   setEmail(String v)  { email = v; }
 
-    public String getGuardianEmail() { return guardianEmail; }
-    public void setGuardianEmail(String guardianEmail) { this.guardianEmail = guardianEmail; }
+    public String getGuardianEmail()          { return guardianEmail; }
+    public void   setGuardianEmail(String v)  { guardianEmail = v; }
 
-    public String getFcmToken() { return fcmToken; }
-    public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
-
-    public Date getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+    public String getFcmToken()          { return fcmToken; }
+    public void   setFcmToken(String v)  { fcmToken = v; }
 }

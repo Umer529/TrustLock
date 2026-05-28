@@ -12,8 +12,8 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.trustlock.databinding.ActivityMainBinding;
 import com.example.trustlock.service.ScreenTimeMonitorService;
 import com.example.trustlock.ui.welcome.WelcomeActivity;
+import com.example.trustlock.util.SessionManager;
 import com.example.trustlock.util.UsageStatsHelper;
-import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,8 +23,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Redirect to onboarding if the user hasn't registered yet
-        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+        if (!SessionManager.getInstance().isLoggedIn()) {
             startActivity(new Intent(this, WelcomeActivity.class));
             finish();
             return;
@@ -44,8 +43,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Start monitoring only if the user has granted Usage Access permission.
-        // The service is also started at boot via BootReceiver.
         if (UsageStatsHelper.hasUsagePermission(this)) {
             startMonitorService();
         }

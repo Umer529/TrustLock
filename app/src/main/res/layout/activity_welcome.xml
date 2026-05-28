@@ -13,6 +13,7 @@
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:src="@drawable/ic_shield"
+        android:contentDescription="ScreenPact shield"
         app:layout_constraintBottom_toTopOf="@id/tvAppName"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -27,10 +28,10 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.02"
         android:text="ScreenPact"
         android:textColor="@color/text_primary"
         android:textSize="36sp"
-        android:letterSpacing="0.02"
         app:layout_constraintBottom_toTopOf="@id/tvTagline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -49,6 +50,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvAppName" />
+
+    <!-- Sign In text button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSignIn"
+        style="@style/ScreenPact.Button.Secondary"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:text="I already have an account"
+        app:layout_constraintBottom_toTopOf="@id/btnGetStarted"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Get Started button pinned to bottom -->
     <com.google.android.material.button.MaterialButton

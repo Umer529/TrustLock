@@ -10,14 +10,27 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.example.trustlock.databinding.ActivityBlockedBinding;
+import com.example.trustlock.models.ApprovalRequest;
+import com.example.trustlock.ui.approval.WaitingForApprovalDialog;
+import com.example.trustlock.util.ApprovalRequestManager;
 import com.example.trustlock.util.BlockedAppsManager;
+import com.example.trustlock.util.SessionManager;
 import com.example.trustlock.util.UsageStatsHelper;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class BlockedAppActivity extends AppCompatActivity {
 
     public static final String EXTRA_PACKAGE_NAME = "packageName";
+    private static final int   EXTRA_TIME_MINUTES = 30;
+    private static final String TAG_DIALOG         = "extra_time_approval";
 
     private ActivityBlockedBinding binding;
+    private BlockedAppsManager     blockedAppsManager;
+
+    private String packageName;
+    private String appName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +38,9 @@ public class BlockedAppActivity extends AppCompatActivity {
         binding = ActivityBlockedBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        String packageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
+        blockedAppsManager = new BlockedAppsManager(this);
+
+        packageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
         if (packageName == null) {
             finish();
             return;
@@ -34,59 +49,110 @@ public class BlockedAppActivity extends AppCompatActivity {
         populateUi(packageName);
 
         binding.btnGoBack.setOnClickListener(v -> goToHomeLauncher());
-
-        binding.btnRequestTime.setOnClickListener(v ->
-                Toast.makeText(this, "Coming soon", Toast.LENGTH_SHORT).show());
+        binding.btnRequestTime.setOnClickListener(v -> requestExtraTime());
     }
 
-    /**
-     * If the blocked app launches again while this screen is showing (e.g. the user
-     * switched away and back), refresh the data instead of stacking a second instance.
-     */
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        String packageName = intent.getStringExtra(EXTRA_PACKAGE_NAME);
-        if (packageName != null) {
+        String pkg = intent.getStringExtra(EXTRA_PACKAGE_NAME);
+        if (pkg != null) {
+            packageName = pkg;
             populateUi(packageName);
         }
     }
 
-    private void populateUi(String packageName) {
+    private void populateUi(String pkg) {
         PackageManager pm = getPackageManager();
 
-        // App name
-        String appName;
         try {
-            appName = pm.getApplicationLabel(
-                    pm.getApplicationInfo(packageName, 0)).toString();
+            appName = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString();
         } catch (PackageManager.NameNotFoundException e) {
-            appName = packageName;
+            appName = pkg;
         }
         binding.tvBlockedAppName.setText(appName);
 
-        // App icon via Glide
         try {
-            Drawable icon = pm.getApplicationIcon(packageName);
+            Drawable icon = pm.getApplicationIcon(pkg);
             Glide.with(this).load(icon).into(binding.ivBlockedAppIcon);
         } catch (PackageManager.NameNotFoundException e) {
             binding.ivBlockedAppIcon.setImageResource(android.R.drawable.sym_def_app_icon);
         }
 
-        // Usage vs limit message
-        long usedMinutes = UsageStatsHelper.getTodayUsageMinutes(this, packageName);
-        int limitMinutes = new BlockedAppsManager(this).getLimitMinutes(packageName);
+        long usedMinutes  = UsageStatsHelper.getTodayUsageMinutes(this, pkg);
+        int  limitMinutes = blockedAppsManager.getLimitMinutes(pkg);
 
         String message;
         if (limitMinutes > 0) {
             message = "You've used " + appName + " for " + formatMinutes(usedMinutes)
                     + " today.\nYour daily limit is " + formatMinutes(limitMinutes) + ".";
         } else {
-            message = "You've used " + appName + " for "
-                    + formatMinutes(usedMinutes) + " today.";
+            message = "You've used " + appName + " for " + formatMinutes(usedMinutes) + " today.";
         }
         binding.tvBlockedMessage.setText(message);
+    }
+
+    private void requestExtraTime() {
+        SessionManager session = SessionManager.getInstance();
+        String userId        = session.getUserId();
+        String guardianEmail = session.getGuardianEmail();
+
+        if (userId == null) {
+            Toast.makeText(this, "Not signed in", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (guardianEmail == null || guardianEmail.isEmpty()) {
+            Toast.makeText(this, "No guardian email set", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        binding.btnRequestTime.setEnabled(false);
+        binding.btnRequestTime.setText("Sending…");
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("packageName",  packageName);
+        payload.put("appName",      appName);
+        payload.put("extraMinutes", EXTRA_TIME_MINUTES);
+
+        String description = "Allow " + EXTRA_TIME_MINUTES + " more minutes of " + appName;
+
+        new ApprovalRequestManager().createApprovalRequest(
+                userId, ApprovalRequest.TYPE_EXTRA_TIME,
+                guardianEmail, payload, description,
+                requestId -> runOnUiThread(() -> {
+                    binding.btnRequestTime.setEnabled(true);
+                    binding.btnRequestTime.setText("Request Extra Time");
+
+                    if (requestId == null) {
+                        Toast.makeText(this, "Failed to send request. Try again.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    WaitingForApprovalDialog dialog = WaitingForApprovalDialog.newInstance(
+                            requestId, guardianEmail, description);
+                    dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
+                        @Override
+                        public void onApproved() {
+                            blockedAppsManager.unblockApp(packageName);
+                            blockedAppsManager.setGracePeriod(packageName, EXTRA_TIME_MINUTES);
+                            Toast.makeText(BlockedAppActivity.this,
+                                    "Approved! You have " + EXTRA_TIME_MINUTES + " extra minutes.",
+                                    Toast.LENGTH_LONG).show();
+                            goToHomeLauncher();
+                        }
+
+                        @Override
+                        public void onDenied() {
+                            Toast.makeText(BlockedAppActivity.this,
+                                    "Guardian denied extra time.", Toast.LENGTH_LONG).show();
+                        }
+                    });
+
+                    if (!isFinishing() && !isDestroyed()) {
+                        dialog.show(getSupportFragmentManager(), TAG_DIALOG);
+                    }
+                }));
     }
 
     private void goToHomeLauncher() {

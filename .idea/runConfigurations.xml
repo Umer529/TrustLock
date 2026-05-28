@@ -14,4 +14,22 @@
       </set>
     </option>
   </component>
+  <component name="RunManager" selected="Android App.app">
+    <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="ACTIVITY_CHOOSE_DIALOG_ALIASED_NAME" value="" />
+      <option name="FORCE_STOP_RUNNING_APP" value="true" />
+      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="APP_ARM_64_DEBUGGER_MODE" value="Auto" />
+      <PERSISTENT_DEVICE_SELECTION_CONFIG>
+        <Target selection="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      </PERSISTENT_DEVICE_SELECTION_CONFIG>
+      <method v="2">
+        <option name="Gradle.BeforeRunTask" tasks="assembleDebug" />
+      </method>
+    </configuration>
+  </component>
 </project>

@@ -1,9 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.google.services)
-    // alias(libs.plugins.hilt)  // Temporarily disabled for AGP 9 compatibility
-    // alias(libs.plugins.ksp)   // Temporarily disabled 
-    // alias(libs.plugins.navigation.safeargs) // disabled temporarily to avoid plugin ordering issues
 }
 
 android {
@@ -16,13 +12,13 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -48,20 +44,13 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.recyclerview)
     implementation(libs.cardview)
+    implementation(libs.swiperefreshlayout)
 
-    // Firebase — BOM manages individual library versions
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.messaging)
-
-    // Hilt - Temporarily disabled for AGP 9 compatibility
-    // implementation(libs.hilt.android)
-    // ksp(libs.hilt.compiler)
-    
-    implementation(libs.credentials)
-    implementation(libs.credentials.play.services.auth)
-    implementation(libs.googleid)
+    // Supabase via Retrofit + OkHttp REST
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
 
     // Navigation Component
     implementation(libs.navigation.fragment)
@@ -73,6 +62,10 @@ dependencies {
 
     // DataStore
     implementation(libs.datastore.preferences)
+
+    // Room (SQLite local database)
+    implementation(libs.room.runtime)
+    annotationProcessor(libs.room.compiler)
 
     // Glide
     implementation(libs.glide)

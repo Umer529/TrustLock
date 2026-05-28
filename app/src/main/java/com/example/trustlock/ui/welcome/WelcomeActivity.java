@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.trustlock.databinding.ActivityWelcomeBinding;
+import com.example.trustlock.ui.login.LoginActivity;
 import com.example.trustlock.ui.registration.RegistrationActivity;
 
 public class WelcomeActivity extends AppCompatActivity {
@@ -22,5 +23,8 @@ public class WelcomeActivity extends AppCompatActivity {
             startActivity(new Intent(this, RegistrationActivity.class));
             finish();
         });
+
+        binding.btnSignIn.setOnClickListener(v ->
+                startActivity(new Intent(this, LoginActivity.class)));
     }
 }

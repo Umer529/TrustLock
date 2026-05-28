@@ -1,54 +1,53 @@
 package com.example.trustlock.viewmodel;
 
+import android.app.Application;
 import android.util.Patterns;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
+import com.example.trustlock.data.LocalRepository;
+import com.example.trustlock.data.SupabaseAuthApi;
+import com.example.trustlock.data.SupabaseClient;
 import com.example.trustlock.data.UserRepository;
+import com.example.trustlock.data.local.UserProfileEntity;
 import com.example.trustlock.models.User;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.trustlock.util.SessionManager;
 
-public class RegistrationViewModel extends ViewModel {
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class RegistrationViewModel extends AndroidViewModel {
 
     public enum RegistrationState { IDLE, LOADING, SUCCESS, ERROR }
 
-    private final FirebaseAuth auth;
-    private final UserRepository userRepository;
-
-    // Per-step field storage (shared across fragment instances)
-    private final MutableLiveData<String> name = new MutableLiveData<>("");
-    private final MutableLiveData<String> email = new MutableLiveData<>("");
+    private final MutableLiveData<String> name          = new MutableLiveData<>("");
+    private final MutableLiveData<String> email         = new MutableLiveData<>("");
+    private final MutableLiveData<String> password      = new MutableLiveData<>("");
     private final MutableLiveData<String> guardianEmail = new MutableLiveData<>("");
-    private String pin = "";
 
     private final MutableLiveData<RegistrationState> registrationState =
             new MutableLiveData<>(RegistrationState.IDLE);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
-    public RegistrationViewModel() {
-        this.auth = FirebaseAuth.getInstance();
-        this.userRepository = new UserRepository(FirebaseFirestore.getInstance());
+    public RegistrationViewModel(@NonNull Application application) {
+        super(application);
     }
 
-    // ─── Field setters ───────────────────────────────────────────────────────
+    public void setName(String v)          { name.setValue(v); }
+    public void setEmail(String v)         { email.setValue(v); }
+    public void setPassword(String v)      { password.setValue(v); }
+    public void setGuardianEmail(String v) { guardianEmail.setValue(v); }
 
-    public void setName(String value) { name.setValue(value); }
-    public void setEmail(String value) { email.setValue(value); }
-    public void setGuardianEmail(String value) { guardianEmail.setValue(value); }
-    public void setPin(String value) { this.pin = value; }
-
-    // ─── Field getters (for restoring UI state when fragment re-attaches) ────
-
-    public LiveData<String> getName() { return name; }
-    public LiveData<String> getEmail() { return email; }
-    public LiveData<String> getGuardianEmail() { return guardianEmail; }
+    public LiveData<String>            getName()              { return name; }
+    public LiveData<String>            getEmail()             { return email; }
+    public LiveData<String>            getPassword()          { return password; }
+    public LiveData<String>            getGuardianEmail()     { return guardianEmail; }
     public LiveData<RegistrationState> getRegistrationState() { return registrationState; }
-    public LiveData<String> getErrorMessage() { return errorMessage; }
-
-    // ─── Validation ──────────────────────────────────────────────────────────
+    public LiveData<String>            getErrorMessage()      { return errorMessage; }
 
     public boolean isValidEmail(String input) {
         return input != null
@@ -56,34 +55,61 @@ public class RegistrationViewModel extends ViewModel {
                 && Patterns.EMAIL_ADDRESS.matcher(input.trim()).matches();
     }
 
-    // ─── Firebase registration ───────────────────────────────────────────────
-
-    /**
-     * Signs in anonymously, saves the User document to Firestore, then stores
-     * the PIN locally (PIN storage via PinManager is wired in Step 9).
-     */
     public void saveUserToFirebase() {
         registrationState.setValue(RegistrationState.LOADING);
 
-        auth.signInAnonymously()
-                .addOnSuccessListener(authResult -> {
-                    String uid = authResult.getUser().getUid();
+        String userEmail  = email.getValue();
+        String userPass   = password.getValue();
 
-                    User user = new User(
-                            uid,
-                            name.getValue(),
-                            email.getValue(),
-                            guardianEmail.getValue(),
-                            null,   // FCM token — updated by FCM service on first launch
-                            null    // createdAt — @ServerTimestamp fills this in
-                    );
+        SupabaseClient.getInstance().auth()
+                .signUp(new SupabaseAuthApi.SignUpRequest(userEmail, userPass))
+                .enqueue(new Callback<SupabaseAuthApi.AuthResponse>() {
+                    @Override
+                    public void onResponse(Call<SupabaseAuthApi.AuthResponse> call,
+                                           Response<SupabaseAuthApi.AuthResponse> response) {
+                        if (!response.isSuccessful()
+                                || response.body() == null
+                                || response.body().user == null) {
+                            errorMessage.postValue("Registration failed. Try a different email.");
+                            registrationState.postValue(RegistrationState.ERROR);
+                            return;
+                        }
 
-                    userRepository.saveUser(user);
-                    registrationState.setValue(RegistrationState.SUCCESS);
-                })
-                .addOnFailureListener(e -> {
-                    errorMessage.setValue("Registration failed: " + e.getMessage());
-                    registrationState.setValue(RegistrationState.ERROR);
+                        SupabaseAuthApi.AuthResponse auth = response.body();
+                        String uid      = auth.user.id;
+                        String userName = name.getValue();
+                        String guardian = guardianEmail.getValue();
+
+                        // Persist to session (SharedPreferences)
+                        SessionManager session = SessionManager.getInstance();
+                        session.setUserId(uid);
+                        session.setAccessToken(auth.accessToken);
+                        session.setRefreshToken(auth.refreshToken);
+                        session.setGuardianEmail(guardian);
+                        session.setUserName(userName);
+                        session.setUserEmail(userEmail);
+                        session.setPassword(userPass);
+
+                        // Persist to Supabase
+                        User user = new User(uid, userName, userEmail, guardian, null);
+                        new UserRepository().saveUser(user);
+
+                        // Persist locally to SQLite so data is available offline
+                        UserProfileEntity profile = new UserProfileEntity();
+                        profile.id           = uid;
+                        profile.name         = userName;
+                        profile.email        = userEmail;
+                        profile.guardianEmail = guardian;
+                        new LocalRepository(getApplication()).saveProfile(profile);
+
+                        registrationState.postValue(RegistrationState.SUCCESS);
+                    }
+
+                    @Override
+                    public void onFailure(Call<SupabaseAuthApi.AuthResponse> call, Throwable t) {
+                        errorMessage.postValue("Network error: " + t.getMessage());
+                        registrationState.postValue(RegistrationState.ERROR);
+                    }
                 });
     }
 }

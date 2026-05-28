@@ -4,6 +4,9 @@
 
     <!-- ─── Standard permissions ─────────────────────────────────────────── -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required on Android 11+ to query all installed packages for parental controls -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- API 34+: required when foregroundServiceType="specialUse" -->
@@ -68,6 +71,26 @@
             android:launchMode="singleTop"
             android:excludeFromRecents="true"
             android:theme="@style/Theme.TrustLock.Fullscreen" />
+
+        <activity
+            android:name=".ui.login.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Guardian taps the FCM notification deep link to approve or deny a request -->
+        <activity
+            android:name=".ui.approval.GuardianApprovalActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="screenpact"
+                    android:host="approve" />
+            </intent-filter>
+        </activity>
 
         <!-- ─── Receivers ───────────────────────────────────────────────── -->
 

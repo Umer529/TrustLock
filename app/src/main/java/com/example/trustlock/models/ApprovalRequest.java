@@ -1,71 +1,70 @@
 package com.example.trustlock.models;
 
-import com.google.firebase.firestore.ServerTimestamp;
+import com.google.gson.annotations.SerializedName;
 
-import java.util.Date;
 import java.util.Map;
 
 public class ApprovalRequest {
 
-    /** Common values: "CHANGE_LIMIT", "UNINSTALL" */
     public static final String TYPE_CHANGE_LIMIT = "CHANGE_LIMIT";
-    public static final String TYPE_UNINSTALL = "UNINSTALL";
+    public static final String TYPE_UNINSTALL    = "UNINSTALL";
+    public static final String TYPE_EXTRA_TIME   = "EXTRA_TIME";
 
-    /** Common values: "PENDING", "APPROVED", "DENIED" */
-    public static final String STATUS_PENDING = "PENDING";
+    public static final String STATUS_PENDING  = "PENDING";
     public static final String STATUS_APPROVED = "APPROVED";
-    public static final String STATUS_DENIED = "DENIED";
+    public static final String STATUS_DENIED   = "DENIED";
 
+    @SerializedName("id")
     private String id;
+
+    @SerializedName("user_id")
     private String userId;
+
+    @SerializedName("type")
     private String type;
+
+    @SerializedName("requested_by")
     private String requestedBy;
+
+    @SerializedName("guardian_email")
     private String guardianEmail;
+
+    @SerializedName("status")
     private String status;
 
-    /** Flexible payload — stores the proposed change details (e.g. new limit values). */
+    @SerializedName("payload")
     private Map<String, Object> payload;
 
-    @ServerTimestamp
-    private Date createdAt;
-
-    /** Required by Firestore for deserialization. */
     public ApprovalRequest() {}
 
-    public ApprovalRequest(String id, String userId, String type, String requestedBy,
-                           String guardianEmail, String status,
-                           Map<String, Object> payload, Date createdAt) {
-        this.id = id;
-        this.userId = userId;
-        this.type = type;
-        this.requestedBy = requestedBy;
+    public ApprovalRequest(String userId, String type, String requestedBy,
+                           String guardianEmail, String status, Map<String, Object> payload) {
+        this.userId        = userId;
+        this.type          = type;
+        this.requestedBy   = requestedBy;
         this.guardianEmail = guardianEmail;
-        this.status = status;
-        this.payload = payload;
-        this.createdAt = createdAt;
+        this.status        = status;
+        this.payload       = payload;
     }
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId()               { return id; }
+    public void   setId(String v)       { id = v; }
 
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
+    public String getUserId()           { return userId; }
+    public void   setUserId(String v)   { userId = v; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public String getType()             { return type; }
+    public void   setType(String v)     { type = v; }
 
-    public String getRequestedBy() { return requestedBy; }
-    public void setRequestedBy(String requestedBy) { this.requestedBy = requestedBy; }
+    public String getRequestedBy()          { return requestedBy; }
+    public void   setRequestedBy(String v)  { requestedBy = v; }
 
-    public String getGuardianEmail() { return guardianEmail; }
-    public void setGuardianEmail(String guardianEmail) { this.guardianEmail = guardianEmail; }
+    public String getGuardianEmail()          { return guardianEmail; }
+    public void   setGuardianEmail(String v)  { guardianEmail = v; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getStatus()           { return status; }
+    public void   setStatus(String v)   { status = v; }
 
-    public Map<String, Object> getPayload() { return payload; }
-    public void setPayload(Map<String, Object> payload) { this.payload = payload; }
-
-    public Date getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+    public Map<String, Object> getPayload()          { return payload; }
+    public void                setPayload(Map<String, Object> v) { payload = v; }
 }

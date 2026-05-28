@@ -7,6 +7,7 @@ import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.trustlock.R;
 import com.example.trustlock.databinding.ActivityRegistrationBinding;
 import com.example.trustlock.ui.permissions.PermissionsActivity;
 import com.example.trustlock.viewmodel.RegistrationViewModel;
@@ -56,13 +57,10 @@ public class RegistrationActivity extends AppCompatActivity {
     }
 
     private void updateDots(int activePage) {
-        View[] dots = {binding.dot1, binding.dot2, binding.dot3};
+        View[] dots = {binding.dot1, binding.dot2};
         for (int i = 0; i < dots.length; i++) {
             dots[i].setBackgroundResource(
-                    i == activePage
-                            ? com.example.trustlock.R.drawable.dot_active
-                            : com.example.trustlock.R.drawable.dot_inactive
-            );
+                    i == activePage ? R.drawable.dot_active : R.drawable.dot_inactive);
         }
     }
 }

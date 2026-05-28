@@ -1,7 +1,6 @@
 package com.example.trustlock.ui.registration;
 
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.trustlock.databinding.FragmentStep2Binding;
 import com.example.trustlock.viewmodel.RegistrationViewModel;
+import com.google.android.material.snackbar.Snackbar;
 
 public class Step2Fragment extends Fragment {
 
@@ -54,7 +54,28 @@ public class Step2Fragment extends Fragment {
 
             binding.tilGuardianEmail.setError(null);
             viewModel.setGuardianEmail(guardianEmail);
-            ((RegistrationActivity) requireActivity()).goToPage(2);
+            viewModel.saveUserToFirebase();
+        });
+
+        viewModel.getRegistrationState().observe(getViewLifecycleOwner(), state -> {
+            switch (state) {
+                case LOADING:
+                    binding.btnNext.setEnabled(false);
+                    binding.btnNext.setText("Creating account...");
+                    break;
+                case ERROR:
+                    binding.btnNext.setEnabled(true);
+                    binding.btnNext.setText("Complete Setup");
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), msg -> {
+            if (msg != null && !msg.isEmpty()) {
+                Snackbar.make(requireView(), msg, Snackbar.LENGTH_LONG).show();
+            }
         });
     }
 

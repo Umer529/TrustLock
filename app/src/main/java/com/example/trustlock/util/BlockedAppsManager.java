@@ -15,10 +15,11 @@ import java.util.Set;
  */
 public class BlockedAppsManager {
 
-    private static final String PREFS_NAME = "screenpact_blocked_apps";
-    private static final String KEY_BLOCKED = "blocked_packages";
-    private static final String KEY_LIMIT_PREFIX = "limit_";
-    private static final String KEY_LAST_RESET = "last_reset_date";
+    private static final String PREFS_NAME        = "screenpact_blocked_apps";
+    private static final String KEY_BLOCKED       = "blocked_packages";
+    private static final String KEY_LIMIT_PREFIX  = "limit_";
+    private static final String KEY_GRACE_PREFIX  = "grace_until_";
+    private static final String KEY_LAST_RESET    = "last_reset_date";
 
     private final SharedPreferences prefs;
 
@@ -62,6 +63,21 @@ public class BlockedAppsManager {
     }
 
     /**
+     * Grants a temporary reprieve for {@code durationMinutes} minutes.
+     * During this window, ScreenTimeMonitorService will not re-block the app.
+     */
+    public void setGracePeriod(String packageName, int durationMinutes) {
+        long graceUntil = System.currentTimeMillis() + (long) durationMinutes * 60_000L;
+        prefs.edit().putLong(KEY_GRACE_PREFIX + packageName, graceUntil).apply();
+    }
+
+    /** Returns true while an approved grace window is still active. */
+    public boolean isInGracePeriod(String packageName) {
+        long graceUntil = prefs.getLong(KEY_GRACE_PREFIX + packageName, 0);
+        return graceUntil > System.currentTimeMillis();
+    }
+
+    /**
      * Clears all blocked apps and their stored limits.
      * Called by ScreenTimeMonitorService on the first tick of a new calendar day.
      */
@@ -70,6 +86,7 @@ public class BlockedAppsManager {
         SharedPreferences.Editor editor = prefs.edit().putStringSet(KEY_BLOCKED, new HashSet<>());
         for (String pkg : blocked) {
             editor.remove(KEY_LIMIT_PREFIX + pkg);
+            editor.remove(KEY_GRACE_PREFIX + pkg);
         }
         editor.apply();
     }

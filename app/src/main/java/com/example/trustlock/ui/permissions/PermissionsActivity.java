@@ -1,6 +1,8 @@
 package com.example.trustlock.ui.permissions;
 
 import android.app.AppOpsManager;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -15,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.trustlock.MainActivity;
 import com.example.trustlock.R;
 import com.example.trustlock.databinding.ActivityPermissionsBinding;
+import com.example.trustlock.receiver.ScreenPactDeviceAdminReceiver;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,14 +28,9 @@ public class PermissionsActivity extends AppCompatActivity {
     private PermissionsAdapter adapter;
     private List<PermissionItem> permissionItems;
 
-    // Tracks which permission row launched the system settings screen
-    private int pendingGrantPosition = -1;
-
     private final ActivityResultLauncher<Intent> settingsLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                // Re-check all permissions when returning from Settings
-                recheckAllPermissions();
-            });
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                    result -> recheckAllPermissions());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,10 +40,8 @@ public class PermissionsActivity extends AppCompatActivity {
 
         buildPermissionList();
 
-        adapter = new PermissionsAdapter(permissionItems, (item, position) -> {
-            pendingGrantPosition = position;
-            launchSettingsFor(item.getType());
-        });
+        adapter = new PermissionsAdapter(permissionItems, (item, position) ->
+                launchSettingsFor(item.getType()));
 
         binding.rvPermissions.setLayoutManager(new LinearLayoutManager(this));
         binding.rvPermissions.setAdapter(adapter);
@@ -79,7 +75,7 @@ public class PermissionsActivity extends AppCompatActivity {
                 new PermissionItem(
                         PermissionItem.Type.DEVICE_ADMIN,
                         "Device Admin",
-                        "Prevents ScreenPact from being uninstalled without guardian approval",
+                        "Prevents uninstall without guardian approval",
                         android.R.drawable.ic_lock_lock),
                 new PermissionItem(
                         PermissionItem.Type.NOTIFICATIONS,
@@ -99,8 +95,14 @@ public class PermissionsActivity extends AppCompatActivity {
                 intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
                 break;
             case DEVICE_ADMIN:
-                // DeviceAdminHelper.requestAdminActivation() added in Step 8
-                intent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
+                // Opens Android's built-in "Activate device administrator" dialog
+                // showing exactly which app is requesting admin and why.
+                ComponentName adminComponent =
+                        new ComponentName(this, ScreenPactDeviceAdminReceiver.class);
+                intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent);
+                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                        "Prevents ScreenPact from being uninstalled without guardian approval.");
                 break;
             case NOTIFICATIONS:
                 intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
@@ -127,14 +129,13 @@ public class PermissionsActivity extends AppCompatActivity {
             case ACCESSIBILITY:
                 return isAccessibilityServiceEnabled();
             case DEVICE_ADMIN:
-                // Checked properly in Step 8 via DeviceAdminHelper
-                return false;
+                return isDeviceAdminActive();
             case NOTIFICATIONS:
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     return checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                             == android.content.pm.PackageManager.PERMISSION_GRANTED;
                 }
-                return true; // Pre-13 notifications don't need runtime permission
+                return true;
         }
         return false;
     }
@@ -149,23 +150,30 @@ public class PermissionsActivity extends AppCompatActivity {
     }
 
     private boolean isAccessibilityServiceEnabled() {
-        String serviceId = getPackageName() + "/.service.AppBlockingAccessibilityService";
-        String settingValue = Settings.Secure.getString(
+        // Must use the fully-qualified component name: "pkg/pkg.service.ClassName"
+        String serviceId = getPackageName() + "/"
+                + "com.example.trustlock.service.AppBlockingAccessibilityService";
+        String enabled = Settings.Secure.getString(
                 getContentResolver(),
                 Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-        return settingValue != null && settingValue.contains(serviceId);
+        return enabled != null && enabled.contains(serviceId);
+    }
+
+    private boolean isDeviceAdminActive() {
+        DevicePolicyManager dpm =
+                (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName admin = new ComponentName(this, ScreenPactDeviceAdminReceiver.class);
+        return dpm != null && dpm.isAdminActive(admin);
     }
 
     private void updateContinueButton() {
-        boolean allGranted = true;
+        boolean coreGranted = true;
         for (PermissionItem item : permissionItems) {
-            // Device Admin is checked separately — skip it for the gate for now
+            // Device Admin is optional — uninstall protection won't work without it,
+            // but the core screen-time features are unaffected.
             if (item.getType() == PermissionItem.Type.DEVICE_ADMIN) continue;
-            if (!item.isGranted()) {
-                allGranted = false;
-                break;
-            }
+            if (!item.isGranted()) { coreGranted = false; break; }
         }
-        binding.btnContinue.setEnabled(allGranted);
+        binding.btnContinue.setEnabled(coreGranted);
     }
 }
