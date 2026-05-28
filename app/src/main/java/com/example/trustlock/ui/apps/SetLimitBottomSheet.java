@@ -67,11 +67,15 @@ public class SetLimitBottomSheet extends BottomSheetDialogFragment {
         applyPickerTextColor(binding.npHours,    android.graphics.Color.WHITE);
         applyPickerTextColor(binding.npMinutes,  android.graphics.Color.WHITE);
 
-        // Show "Remove limit" only when an existing limit is being edited
+        // "Update Limit" when editing an existing one, "Set Limit" for new
+        if (currentMinutes > 0) {
+            binding.btnSetLimit.setText("Update Limit");
+        }
+
         if (currentMinutes > 0) {
             binding.btnRemoveLimit.setVisibility(View.VISIBLE);
             binding.btnRemoveLimit.setOnClickListener(v -> {
-                viewModel.deleteLimit(packageName);
+                viewModel.requestRemoveLimit(packageName, appName);
                 dismiss();
             });
         }

@@ -6,7 +6,9 @@ import com.example.trustlock.models.AppLimit;
 import com.example.trustlock.models.User;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -46,6 +48,25 @@ public class UserRepository {
                     }
                     @Override public void onFailure(Call<Void> call, Throwable t) {
                         Log.e(TAG, "saveAppLimit error", t);
+                        if (onComplete != null) onComplete.run();
+                    }
+                });
+    }
+
+    /** PATCH — reliably updates an existing limit row without needing INSERT permission. */
+    public void updateAppLimit(String userId, String packageName,
+                               int newMinutes, Runnable onComplete) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("daily_limit_minutes", newMinutes);
+        body.put("is_active", true);
+        db.patchAppLimit("return=minimal", "eq." + userId, "eq." + packageName, body)
+                .enqueue(new Callback<Void>() {
+                    @Override public void onResponse(Call<Void> call, Response<Void> r) {
+                        if (!r.isSuccessful()) Log.e(TAG, "updateAppLimit failed: " + r.code());
+                        if (onComplete != null) onComplete.run();
+                    }
+                    @Override public void onFailure(Call<Void> call, Throwable t) {
+                        Log.e(TAG, "updateAppLimit error", t);
                         if (onComplete != null) onComplete.run();
                     }
                 });

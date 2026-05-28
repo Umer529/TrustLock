@@ -141,9 +141,13 @@ public class GuardianApprovalActivity extends AppCompatActivity {
             return "Remove the ScreenPact app";
         }
         if (ApprovalRequest.TYPE_EXTRA_TIME.equals(request.getType())) {
-            Object appName    = p.get("appName");
-            Object extraMins  = p.get("extraMinutes");
+            Object appName   = p.get("appName");
+            Object extraMins = p.get("extraMinutes");
             return "Allow " + extraMins + " more minutes of " + appName;
+        }
+        if (ApprovalRequest.TYPE_REMOVE_LIMIT.equals(request.getType())) {
+            Object appName = p.get("appName");
+            return "Remove the daily time limit for " + appName;
         }
         return "An action requires your approval.";
     }

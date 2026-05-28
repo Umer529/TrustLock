@@ -7,6 +7,7 @@ import java.util.Map;
 public class ApprovalRequest {
 
     public static final String TYPE_CHANGE_LIMIT = "CHANGE_LIMIT";
+    public static final String TYPE_REMOVE_LIMIT = "REMOVE_LIMIT";
     public static final String TYPE_UNINSTALL    = "UNINSTALL";
     public static final String TYPE_EXTRA_TIME   = "EXTRA_TIME";
 

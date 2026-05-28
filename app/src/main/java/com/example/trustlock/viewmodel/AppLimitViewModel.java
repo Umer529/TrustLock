@@ -48,7 +48,9 @@ public class AppLimitViewModel extends AndroidViewModel {
     private final MutableLiveData<PendingApprovalData> pendingApproval = new MutableLiveData<>();
     private final MutableLiveData<String>              error           = new MutableLiveData<>();
 
+    // Stored so that any observer (dialog or background service) can execute the same action
     private AppLimit pendingNewLimit;
+    private Runnable pendingApprovedAction;
     private String   cachedGuardianEmail;
 
     public AppLimitViewModel(@NonNull Application application) {
@@ -86,7 +88,7 @@ public class AppLimitViewModel extends AndroidViewModel {
         });
     }
 
-    // ─── Set / change limit ───────────────────────────────────────────────────
+    // ─── Change limit (requires guardian approval for existing limits) ────────
 
     public void requestLimitChange(@NonNull AppLimit newLimit) {
         String userId = SessionManager.getInstance().getUserId();
@@ -106,15 +108,15 @@ public class AppLimitViewModel extends AndroidViewModel {
             payload.put("newLimitMinutes",     newMins);
             payload.put("currentLimitMinutes", oldMins);
 
-            pendingNewLimit = newLimit;
+            pendingNewLimit       = newLimit;
             pendingNewLimit.setActive(true);
+            pendingApprovedAction = () -> applyPendingLimitNow(userId, newLimit);
 
             fetchGuardianEmailThen(userId, guardianEmail -> {
                 new ApprovalRequestManager().createApprovalRequest(
                         userId, ApprovalRequest.TYPE_CHANGE_LIMIT,
                         guardianEmail, payload, desc, requestId -> {
                             if (requestId != null) {
-                                // Store so background service can poll if dialog is dismissed
                                 SessionManager.getInstance().setPendingRequest(
                                         requestId, ApprovalRequest.TYPE_CHANGE_LIMIT,
                                         newLimit.getPackageName());
@@ -126,60 +128,131 @@ public class AppLimitViewModel extends AndroidViewModel {
                         });
             });
         } else {
+            // New limit — no guardian approval needed
             newLimit.setActive(true);
-            // New limit — no guardian approval needed, save immediately
             String uid = userId;
             userRepository.saveAppLimit(uid, newLimit, () -> {
                 localRepository.saveLimit(modelToEntity(newLimit, uid));
+                updateInMemory(newLimit);
                 limitSaved.postValue(true);
                 loadAppLimits();
             });
         }
     }
 
-    /** Called when the WaitingForApprovalDialog reports APPROVED. */
-    public void applyPendingLimit() {
+    // ─── Remove limit (requires guardian approval) ───────────────────────────
+
+    public void requestRemoveLimit(String packageName, String appName) {
         String userId = SessionManager.getInstance().getUserId();
-        if (userId == null || pendingNewLimit == null) return;
+        if (userId == null) { error.setValue("Not signed in"); return; }
 
-        AppLimit limitToSave = pendingNewLimit;
-        pendingNewLimit = null;
-        SessionManager.getInstance().clearPendingRequest();
+        String desc = "Remove the daily limit for " + appName;
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("packageName", packageName);
+        payload.put("appName",     appName);
 
-        // Save to Supabase first; only then refresh the local cache + LiveData
-        userRepository.saveAppLimit(userId, limitToSave, () -> {
-            localRepository.saveLimit(modelToEntity(limitToSave, userId));
-            limitSaved.postValue(true);
-            loadAppLimits();
+        pendingApprovedAction = () -> executeDeleteLimit(userId, packageName);
+
+        fetchGuardianEmailThen(userId, guardianEmail -> {
+            new ApprovalRequestManager().createApprovalRequest(
+                    userId, ApprovalRequest.TYPE_REMOVE_LIMIT,
+                    guardianEmail, payload, desc, requestId -> {
+                        if (requestId != null) {
+                            SessionManager.getInstance().setPendingRequest(
+                                    requestId, ApprovalRequest.TYPE_REMOVE_LIMIT, packageName);
+                            pendingApproval.postValue(
+                                    new PendingApprovalData(requestId, guardianEmail, desc));
+                        } else {
+                            error.postValue("Failed to send approval request");
+                        }
+                    });
         });
     }
 
-    // ─── Delete limit ─────────────────────────────────────────────────────────
-
-    public void deleteLimit(String packageName) {
-        String userId = SessionManager.getInstance().getUserId();
-        if (userId == null) return;
-
-        userRepository.deleteAppLimit(userId, packageName);
-        localRepository.deleteLimit(userId, packageName);
-
-        // Remove from the in-memory list immediately so the UI updates without waiting
-        List<AppLimit> current = appLimits.getValue();
-        if (current != null) {
-            List<AppLimit> updated = new ArrayList<>();
-            for (AppLimit l : current) {
-                if (!packageName.equals(l.getPackageName())) updated.add(l);
-            }
-            appLimits.postValue(updated);
+    /**
+     * Called by dialog observers when the guardian approves.
+     * Executes whatever action was queued (change OR remove).
+     */
+    public void executePendingAction() {
+        SessionManager.getInstance().clearPendingRequest();
+        if (pendingApprovedAction != null) {
+            Runnable action    = pendingApprovedAction;
+            pendingApprovedAction = null;
+            pendingNewLimit    = null;
+            action.run();
         }
     }
 
-    // ─── Misc ─────────────────────────────────────────────────────────────────
+    /** Kept for callers that still reference it directly (SettingsFragment path). */
+    public void applyPendingLimit() {
+        executePendingAction();
+    }
 
     public void clearPendingApproval() { pendingApproval.setValue(null); }
 
     public long getTodayUsageMinutes(String packageName) {
         return UsageStatsHelper.getTodayUsageMinutes(context, packageName);
+    }
+
+    // ─── Private helpers ─────────────────────────────────────────────────────
+
+    private void applyPendingLimitNow(String userId, AppLimit limit) {
+        // Optimistic update — UI reflects the change immediately
+        updateInMemory(limit);
+
+        // Use PATCH (not upsert) — targets the exact row by userId+packageName,
+        // requires only UPDATE permission, and never accidentally inserts a duplicate.
+        userRepository.updateAppLimit(userId, limit.getPackageName(),
+                limit.getDailyLimitMinutes(), () -> {
+                    localRepository.saveLimit(modelToEntity(limit, userId));
+                    limitSaved.postValue(true);
+                    loadAppLimits();
+                });
+    }
+
+    private void executeDeleteLimit(String userId, String packageName) {
+        // Optimistic removal from UI
+        removeInMemory(packageName);
+
+        userRepository.deleteAppLimit(userId, packageName);
+        localRepository.deleteLimit(userId, packageName);
+        limitSaved.postValue(true);
+        loadAppLimits();
+    }
+
+    /** Directly delete a limit without guardian approval (kept for edge-cases). */
+    public void deleteLimit(String packageName) {
+        String userId = SessionManager.getInstance().getUserId();
+        if (userId == null) return;
+        executeDeleteLimit(userId, packageName);
+    }
+
+    /** Replaces or adds {@code limit} in the in-memory list without a network round-trip. */
+    private void updateInMemory(AppLimit limit) {
+        List<AppLimit> current = appLimits.getValue();
+        if (current == null) { appLimits.postValue(Collections.singletonList(limit)); return; }
+        List<AppLimit> updated = new ArrayList<>();
+        boolean found = false;
+        for (AppLimit l : current) {
+            if (l.getPackageName().equals(limit.getPackageName())) {
+                updated.add(limit);
+                found = true;
+            } else {
+                updated.add(l);
+            }
+        }
+        if (!found) updated.add(limit);
+        appLimits.postValue(updated);
+    }
+
+    private void removeInMemory(String packageName) {
+        List<AppLimit> current = appLimits.getValue();
+        if (current == null) return;
+        List<AppLimit> updated = new ArrayList<>();
+        for (AppLimit l : current) {
+            if (!packageName.equals(l.getPackageName())) updated.add(l);
+        }
+        appLimits.postValue(updated);
     }
 
     private AppLimit findExistingLimit(String packageName) {
@@ -211,16 +284,12 @@ public class AppLimitViewModel extends AndroidViewModel {
         return minutes + "m";
     }
 
-    // ─── Installed apps loading ───────────────────────────────────────────────
+    // ─── Installed apps ───────────────────────────────────────────────────────
 
     private void loadInstalledApps() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             PackageManager pm = context.getPackageManager();
-            android.content.Intent launchIntent =
-                    new android.content.Intent(android.content.Intent.ACTION_MAIN);
-            launchIntent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
-
             List<android.content.pm.PackageInfo> packages = pm.getInstalledPackages(0);
             List<AppInfo> userApps = new ArrayList<>();
             for (android.content.pm.PackageInfo pkg : packages) {

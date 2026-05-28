@@ -171,10 +171,17 @@ public class ScreenTimeMonitorService extends Service {
 
         } else if (ApprovalRequest.TYPE_CHANGE_LIMIT.equals(type)) {
             if (approved && payload != null) {
-                // Apply the limit change directly from the payload — no ViewModel needed
                 applyLimitFromPayload(payload);
             } else {
                 showApprovalNotification("Limit change denied",
+                        "Your guardian rejected the request.", buildMainIntent());
+            }
+
+        } else if (ApprovalRequest.TYPE_REMOVE_LIMIT.equals(type)) {
+            if (approved && packageName != null) {
+                removeLimitForPackage(packageName, payload);
+            } else {
+                showApprovalNotification("Limit removal denied",
                         "Your guardian rejected the request.", buildMainIntent());
             }
         }
@@ -191,12 +198,9 @@ public class ScreenTimeMonitorService extends Service {
 
         int newMins = ((Number) newMinsObj).intValue();
 
-        AppLimit limit = new AppLimit(pkgName, appName, newMins, true);
-        limit.setUserId(userId);
-
         com.example.trustlock.data.UserRepository repo =
                 new com.example.trustlock.data.UserRepository();
-        repo.saveAppLimit(userId, limit, () -> {
+        repo.updateAppLimit(userId, pkgName, newMins, () -> {
             // Also update Room so the UI is correct on next open
             com.example.trustlock.data.local.AppLimitEntity entity =
                     new com.example.trustlock.data.local.AppLimitEntity();
@@ -215,6 +219,23 @@ public class ScreenTimeMonitorService extends Service {
             // Refresh the monitor's cache so enforcement picks up the new limit
             limitsCache.put(pkgName, newMins);
         });
+    }
+
+    private void removeLimitForPackage(String packageName, Map<String, Object> payload) {
+        String userId = SessionManager.getInstance().getUserId();
+        if (userId == null) return;
+
+        String appName = payload != null && payload.get("appName") != null
+                ? (String) payload.get("appName") : getAppName(packageName);
+
+        new com.example.trustlock.data.UserRepository().deleteAppLimit(userId, packageName);
+        new com.example.trustlock.data.LocalRepository(getApplication())
+                .deleteLimit(userId, packageName);
+        blockedAppsManager.unblockApp(packageName);
+
+        showApprovalNotification("Limit removed",
+                "The daily limit for " + appName + " has been removed.",
+                buildMainIntent());
     }
 
     private String formatMinutes(int minutes) {

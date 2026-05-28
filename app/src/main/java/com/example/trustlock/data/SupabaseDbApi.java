@@ -35,6 +35,13 @@ public interface SupabaseDbApi {
     @POST("rest/v1/app_limits")
     Call<Void> upsertAppLimit(@Header("Prefer") String prefer, @Body AppLimit limit);
 
+    /** PATCH updates an existing row's fields without needing INSERT permission. */
+    @PATCH("rest/v1/app_limits")
+    Call<Void> patchAppLimit(@Header("Prefer") String prefer,
+                             @Query("user_id") String userIdEq,
+                             @Query("package_name") String pkgEq,
+                             @Body Map<String, Object> updates);
+
     @DELETE("rest/v1/app_limits")
     Call<Void> deleteAppLimit(@Query("user_id") String userIdEq,
                               @Query("package_name") String packageNameEq);

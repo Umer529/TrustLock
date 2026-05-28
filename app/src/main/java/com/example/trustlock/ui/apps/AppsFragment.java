@@ -77,7 +77,7 @@ public class AppsFragment extends Fragment {
             WaitingForApprovalDialog dialog = WaitingForApprovalDialog.newInstance(
                     data.requestId, data.guardianEmail, data.description);
             dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
-                @Override public void onApproved()  { viewModel.applyPendingLimit(); }
+                @Override public void onApproved()  { viewModel.executePendingAction(); }
                 @Override public void onDenied() {
                     Snackbar.make(requireView(), "Request denied by guardian",
                             Snackbar.LENGTH_LONG).show();

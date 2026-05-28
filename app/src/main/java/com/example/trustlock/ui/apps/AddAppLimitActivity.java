@@ -102,7 +102,7 @@ public class AddAppLimitActivity extends AppCompatActivity {
             dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
                 @Override
                 public void onApproved() {
-                    viewModel.applyPendingLimit();
+                    viewModel.executePendingAction();
                     showSuccessAndFinish();
                 }
                 @Override
