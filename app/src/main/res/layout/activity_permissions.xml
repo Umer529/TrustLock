@@ -10,24 +10,26 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="32dp"
-        android:paddingBottom="16dp">
+        android:paddingHorizontal="24dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="20dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Permissions needed"
+            android:text="Almost there"
             android:textColor="@color/text_primary"
-            android:textSize="28sp"
+            android:textSize="30sp"
             android:fontFamily="sans-serif-medium" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="ScreenPact needs these to enforce your limits"
+            android:text="ScreenPact needs these permissions to protect your screen time"
             android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:lineSpacingExtra="4dp" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -35,7 +37,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="8dp"
         android:clipToPadding="false" />
 
     <com.google.android.material.button.MaterialButton
@@ -43,8 +46,11 @@
         style="@style/ScreenPact.Button.Primary"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_margin="32dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginBottom="36dp"
+        android:layout_marginTop="8dp"
         android:enabled="false"
-        android:text="Continue" />
+        android:text="Continue"
+        android:textSize="16sp" />
 
 </LinearLayout>

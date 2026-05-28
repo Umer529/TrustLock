@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="10dp"
-    app:cardBackgroundColor="@color/surface"
+    app:cardBackgroundColor="@color/surface_variant"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp">
 
@@ -14,13 +14,13 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="14dp">
+        android:padding="16dp">
 
         <!-- App icon -->
         <ImageView
             android:id="@+id/ivAppIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_marginEnd="14dp"
             android:scaleType="fitCenter" />
 
@@ -53,11 +53,11 @@
                 android:id="@+id/progressUsage"
                 style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="5dp"
+                android:layout_height="4dp"
                 android:layout_marginTop="8dp"
                 android:max="100"
                 android:progress="0"
-                android:progressBackgroundTint="@color/divider"
+                android:progressBackgroundTint="@color/outline"
                 android:progressTint="@color/purple_primary" />
 
         </LinearLayout>
@@ -67,7 +67,7 @@
             android:id="@+id/btnEdit"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="10dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Edit limit"
             android:src="@android:drawable/ic_menu_edit"

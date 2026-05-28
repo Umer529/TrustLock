@@ -7,13 +7,41 @@
     android:orientation="vertical"
     android:background="@color/background">
 
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set Limits"
+            android:textColor="@color/text_primary"
+            android:textSize="26sp"
+            android:fontFamily="sans-serif-medium" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Tap an app to set a daily time limit"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
     <!-- Search bar -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilSearch"
         style="@style/ScreenPact.TextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="8dp"
         android:hint="Search apps"
         app:startIconDrawable="@android:drawable/ic_menu_search">
 
@@ -29,10 +57,11 @@
     <!-- Loading spinner -->
     <ProgressBar
         android:id="@+id/progressLoading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="48dp"
+        android:indeterminateTint="@color/purple_primary"
         android:visibility="visible" />
 
     <!-- App list -->
@@ -41,8 +70,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:clipToPadding="false"
+        android:paddingTop="4dp"
         android:paddingBottom="80dp"
+        android:clipToPadding="false"
         android:visibility="gone" />
 
 </LinearLayout>

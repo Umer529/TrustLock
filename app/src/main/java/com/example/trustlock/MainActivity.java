@@ -5,9 +5,7 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.navigation.NavController;
-import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.NavigationUI;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.trustlock.databinding.ActivityMainBinding;
 import com.example.trustlock.service.ScreenTimeMonitorService;
@@ -32,12 +30,38 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        NavHostFragment navHost = (NavHostFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.nav_host_fragment);
-        if (navHost != null) {
-            NavController navController = navHost.getNavController();
-            NavigationUI.setupWithNavController(binding.bottomNav, navController);
-        }
+        setupViewPagerWithNav();
+    }
+
+    private void setupViewPagerWithNav() {
+        binding.viewPager.setAdapter(new MainPagerAdapter(this));
+        // Pre-load adjacent tabs so swipe feels instant
+        binding.viewPager.setOffscreenPageLimit(2);
+
+        final int[] tabIds = {
+            R.id.homeFragment,
+            R.id.appsFragment,
+            R.id.settingsFragment
+        };
+
+        // BottomNav tap → swipe ViewPager to matching page
+        binding.bottomNav.setOnItemSelectedListener(item -> {
+            for (int i = 0; i < tabIds.length; i++) {
+                if (item.getItemId() == tabIds[i]) {
+                    binding.viewPager.setCurrentItem(i, true);
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        // ViewPager swipe → highlight matching BottomNav item
+        binding.viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                binding.bottomNav.setSelectedItemId(tabIds[position]);
+            }
+        });
     }
 
     @Override

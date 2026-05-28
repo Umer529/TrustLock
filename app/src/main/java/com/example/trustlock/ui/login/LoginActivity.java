@@ -6,8 +6,11 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.provider.Settings;
+
 import com.example.trustlock.MainActivity;
 import com.example.trustlock.data.LocalRepository;
+import com.example.trustlock.ui.permissions.PermissionsActivity;
 import com.example.trustlock.data.SupabaseAuthApi;
 import com.example.trustlock.data.SupabaseClient;
 import com.example.trustlock.data.UserRepository;
@@ -93,7 +96,12 @@ public class LoginActivity extends AppCompatActivity {
                                 new LocalRepository(LoginActivity.this).saveProfile(profile);
                             }
                             runOnUiThread(() -> {
-                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                // Go to PermissionsActivity if core permissions are missing;
+                                // otherwise skip straight to the main app.
+                                Class<?> dest = hasCorePermissions()
+                                        ? MainActivity.class
+                                        : PermissionsActivity.class;
+                                startActivity(new Intent(LoginActivity.this, dest));
                                 finishAffinity();
                             });
                         });
@@ -118,5 +126,29 @@ public class LoginActivity extends AppCompatActivity {
 
     private String getField(TextInputEditText et) {
         return et.getText() != null ? et.getText().toString().trim() : "";
+    }
+
+    /** Returns true only when both Usage Access and the Accessibility Service are enabled. */
+    private boolean hasCorePermissions() {
+        return hasUsageAccess() && isAccessibilityEnabled();
+    }
+
+    private boolean hasUsageAccess() {
+        android.app.AppOpsManager appOps =
+                (android.app.AppOpsManager) getSystemService(APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow(
+                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                getPackageName());
+        return mode == android.app.AppOpsManager.MODE_ALLOWED;
+    }
+
+    private boolean isAccessibilityEnabled() {
+        String serviceId = getPackageName()
+                + "/com.example.trustlock.service.AppBlockingAccessibilityService";
+        String enabled = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        return enabled != null && enabled.contains(serviceId);
     }
 }

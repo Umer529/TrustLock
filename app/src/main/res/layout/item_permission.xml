@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="@color/surface"
+    app:cardBackgroundColor="@color/surface_variant"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp">
 
@@ -16,13 +16,24 @@
         android:padding="16dp"
         android:gravity="center_vertical">
 
-        <!-- Icon -->
-        <ImageView
-            android:id="@+id/ivPermIcon"
+        <!-- Icon container -->
+        <FrameLayout
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_marginEnd="16dp"
-            android:tint="@color/purple_light" />
+            android:layout_marginEnd="14dp">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_purple_circle" />
+
+            <ImageView
+                android:id="@+id/ivPermIcon"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:tint="@color/purple_light" />
+        </FrameLayout>
 
         <!-- Text block -->
         <LinearLayout
@@ -49,22 +60,23 @@
                 android:lineSpacingExtra="2dp" />
         </LinearLayout>
 
-        <!-- Grant button / checkmark -->
+        <!-- Grant button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGrant"
             style="@style/ScreenPact.Button.Primary"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_marginStart="12dp"
-            android:paddingHorizontal="16dp"
+            android:layout_width="72dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="10dp"
+            android:paddingHorizontal="0dp"
             android:text="Grant"
-            android:textSize="13sp" />
+            android:textSize="12sp" />
 
+        <!-- Granted checkmark -->
         <ImageView
             android:id="@+id/ivGranted"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="12dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="10dp"
             android:src="@android:drawable/checkbox_on_background"
             android:tint="@color/success"
             android:visibility="gone" />

@@ -13,8 +13,10 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="8dp"
-        android:paddingTop="16dp">
+        android:paddingStart="4dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -29,7 +31,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="4dp"
             android:text="Choose an App"
             android:textColor="@color/text_primary"
             android:textSize="20sp"
@@ -43,9 +45,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        android:hint="Search apps">
+        android:hint="Search apps"
+        app:startIconDrawable="@android:drawable/ic_menu_search">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSearch"
@@ -55,21 +57,19 @@
             android:textColor="@color/text_primary" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Loading indicator -->
     <ProgressBar
         android:id="@+id/progressLoading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="40dp"
+        android:indeterminateTint="@color/purple_primary"
         android:visibility="visible" />
 
-    <!-- Apps list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvInstalledApps"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingHorizontal="16dp"
         android:paddingBottom="16dp"
         android:clipToPadding="false"
         android:visibility="gone" />

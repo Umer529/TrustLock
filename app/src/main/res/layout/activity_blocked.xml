@@ -6,81 +6,103 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <!-- Warning icon -->
-    <ImageView
+    <!-- Top red accent bar -->
+    <View
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:background="@color/error"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Warning icon in circle -->
+    <FrameLayout
         android:id="@+id/ivWarning"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="80dp"
-        android:src="@android:drawable/ic_dialog_alert"
-        android:contentDescription="@string/warning_icon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="72dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/error" />
+        app:layout_constraintTop_toBottomOf="@id/topBar">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_error_circle" />
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:src="@android:drawable/ic_dialog_alert"
+            android:tint="@color/error"
+            android:contentDescription="@string/warning_icon" />
+    </FrameLayout>
 
     <!-- Blocked app icon -->
     <ImageView
         android:id="@+id/ivBlockedAppIcon"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="24dp"
+        android:layout_width="88dp"
+        android:layout_height="88dp"
+        android:layout_marginTop="20dp"
         android:contentDescription="@string/blocked_app_icon"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/ivWarning" />
 
-    <!-- Blocked app name -->
+    <!-- App name -->
     <TextView
         android:id="@+id/tvBlockedAppName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        app:fontFamily="sans-serif-medium"
+        android:fontFamily="sans-serif-medium"
         android:textColor="@color/text_primary"
-        android:textSize="24sp"
+        android:textSize="22sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/ivBlockedAppIcon" />
 
-    <!-- "Time's up" headline -->
+    <!-- "Time's Up" label -->
     <TextView
+        android:id="@+id/tvTimesUp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:text="@string/blocked_message_times_up"
         android:textColor="@color/error"
-        android:textSize="14sp"
-        android:letterSpacing="0.1"
+        android:textSize="13sp"
+        android:letterSpacing="0.08"
+        android:fontFamily="sans-serif-medium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvBlockedAppName" />
 
-    <!-- Usage vs limit message -->
+    <!-- Usage message -->
     <TextView
         android:id="@+id/tvBlockedMessage"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="28dp"
         android:layout_marginHorizontal="40dp"
         android:gravity="center"
-        android:lineSpacingExtra="4dp"
+        android:lineSpacingExtra="5dp"
         android:textColor="@color/text_secondary"
         android:textSize="15sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvBlockedAppName"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@id/tvTimesUp" />
 
-    <!-- Buttons pinned to bottom -->
+    <!-- Bottom buttons -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnGoBack"
         style="@style/ScreenPact.Button.Primary"
         android:layout_width="0dp"
         android:layout_height="56dp"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginHorizontal="28dp"
+        android:layout_marginBottom="12dp"
         android:text="@string/btn_go_back"
+        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@id/btnRequestTime"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -89,8 +111,8 @@
         android:id="@+id/btnRequestTime"
         style="@style/ScreenPact.Button.Secondary"
         android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:layout_marginHorizontal="32dp"
+        android:layout_height="52dp"
+        android:layout_marginHorizontal="28dp"
         android:layout_marginBottom="40dp"
         android:text="@string/btn_request_extra_time"
         app:layout_constraintBottom_toBottomOf="parent"

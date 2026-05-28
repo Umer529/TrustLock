@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Step indicator: 2 dots -->
+    <!-- Progress pills -->
     <LinearLayout
         android:id="@+id/stepIndicator"
         android:layout_width="wrap_content"
@@ -18,20 +18,19 @@
 
         <View
             android:id="@+id/dot1"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_marginEnd="8dp"
+            android:layout_width="28dp"
+            android:layout_height="4dp"
+            android:layout_marginEnd="6dp"
             android:background="@drawable/dot_active" />
 
         <View
             android:id="@+id/dot2"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
+            android:layout_width="28dp"
+            android:layout_height="4dp"
             android:background="@drawable/dot_inactive" />
 
     </LinearLayout>
 
-    <!-- Step content -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"

@@ -4,24 +4,24 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/surface"
-    android:paddingHorizontal="24dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="32dp">
+    android:background="@color/surface_variant"
+    android:paddingBottom="36dp">
 
     <!-- Drag handle -->
     <View
-        android:layout_width="40dp"
+        android:layout_width="36dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="20dp"
-        android:background="@color/divider" />
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="16dp"
+        android:background="@color/outline" />
 
     <!-- App name -->
     <TextView
         android:id="@+id/tvSheetAppName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
         android:layout_marginBottom="4dp"
         android:textColor="@color/text_primary"
         android:textSize="20sp"
@@ -30,18 +30,26 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
         android:layout_marginBottom="28dp"
         android:text="Set daily time limit"
         android:textColor="@color/text_secondary"
         android:textSize="13sp" />
 
-    <!-- Pickers row -->
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/outline"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Pickers -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="horizontal"
-        android:layout_marginBottom="32dp">
+        android:layout_marginBottom="28dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -57,19 +65,20 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="hrs"
+                android:layout_marginTop="6dp"
+                android:text="hours"
                 android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
+            android:layout_marginHorizontal="28dp"
+            android:layout_marginBottom="20dp"
             android:text=":"
             android:textColor="@color/text_secondary"
-            android:textSize="28sp" />
+            android:textSize="32sp" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -85,10 +94,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="min"
+                android:layout_marginTop="6dp"
+                android:text="minutes"
                 android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
     </LinearLayout>
@@ -98,14 +107,17 @@
         style="@style/ScreenPact.Button.Primary"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:text="Set Limit" />
+        android:layout_marginHorizontal="24dp"
+        android:text="Save Limit"
+        android:textSize="16sp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnRemoveLimit"
-        style="@style/ScreenPact.Button.Secondary"
+        style="@style/ScreenPact.Button.Danger"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="12dp"
+        android:layout_height="48dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="10dp"
         android:text="Remove Limit"
         android:visibility="gone" />
 

@@ -3,22 +3,37 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="purple_primary">#6C63FF</color>
+    <!-- Brand -->
+    <color name="purple_primary">#7C6EFA</color>
     <color name="purple_variant">#5A52D5</color>
-    <color name="purple_light">#9D97FF</color>
+    <color name="purple_light">#A89EFC</color>
+    <color name="purple_dim">#2D2760</color>
+    <color name="purple_surface">#1C1A3A</color>
 
-    <color name="background">#0F0F0F</color>
-    <color name="surface">#1A1A1A</color>
-    <color name="surface_variant">#242424</color>
+    <!-- Backgrounds -->
+    <color name="background">#0D0D17</color>
+    <color name="surface">#14141F</color>
+    <color name="surface_variant">#1E1E2E</color>
+    <color name="surface_elevated">#252538</color>
 
-    <color name="text_primary">#FFFFFFFF</color>
-    <color name="text_secondary">#B3FFFFFF</color>
-    <color name="text_hint">#66FFFFFF</color>
+    <!-- Text -->
+    <color name="text_primary">#F0F0FF</color>
+    <color name="text_secondary">#8080A8</color>
+    <color name="text_hint">#3A3A58</color>
 
-    <color name="error">#CF6679</color>
-    <color name="success">#4CAF50</color>
-    <color name="warning">#FFA726</color>
+    <!-- Semantic -->
+    <color name="error">#F87171</color>
+    <color name="error_surface">#2D1515</color>
+    <color name="success">#4ADE80</color>
+    <color name="success_surface">#0D2D1A</color>
+    <color name="warning">#FBBF24</color>
 
-    <color name="divider">#33FFFFFF</color>
-    <color name="dot_inactive">#33FFFFFF</color>
+    <!-- Borders / Dividers -->
+    <color name="outline">#252538</color>
+    <color name="divider">#1E1E2E</color>
+    <color name="dot_inactive">#2A2A40</color>
+
+    <!-- Navigation -->
+    <color name="nav_selected">#7C6EFA</color>
+    <color name="nav_unselected">#4A4A6A</color>
 </resources>

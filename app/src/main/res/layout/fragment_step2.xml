@@ -11,22 +11,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="32dp">
+        android:paddingHorizontal="28dp"
+        android:paddingTop="32dp"
+        android:paddingBottom="32dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Add a guardian"
             android:textColor="@color/text_primary"
-            android:textSize="28sp"
+            android:textSize="26sp"
             android:fontFamily="sans-serif-medium" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="40dp"
-            android:text="A trusted person who keeps you accountable"
+            android:layout_marginBottom="36dp"
+            android:text="A trusted person who approves your changes"
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
 
@@ -50,15 +52,16 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="20dp"
             android:background="@drawable/bg_card"
             android:orientation="horizontal"
             android:padding="16dp">
 
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_marginEnd="12dp"
+                android:layout_marginTop="2dp"
                 android:src="@android:drawable/ic_dialog_info"
                 app:tint="@color/purple_light" />
 
@@ -66,7 +69,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="This person will be notified if you try to change your limits or delete ScreenPact. They must approve before any changes go through."
+                android:text="This person will be notified when you try to change limits or remove ScreenPact. They must approve before any changes take effect."
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp"
                 android:lineSpacingExtra="3dp" />
@@ -76,12 +79,12 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:minHeight="60dp" />
+            android:minHeight="48dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="24dp"
             android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
@@ -89,7 +92,7 @@
                 style="@style/ScreenPact.Button.Secondary"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
-                android:layout_marginEnd="12dp"
+                android:layout_marginEnd="10dp"
                 android:layout_weight="1"
                 android:text="Back" />
 
@@ -99,7 +102,7 @@
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:layout_weight="1"
-                android:text="Complete Setup" />
+                android:text="Complete" />
         </LinearLayout>
 
     </LinearLayout>
