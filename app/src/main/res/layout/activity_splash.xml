@@ -9,9 +9,10 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:paddingHorizontal="20dp">
 
-        <!-- Shield + lock logo -->
+        <!-- Shield + lock logo (Stacked variation) -->
         <ImageView
             android:id="@+id/ivLogo"
             android:layout_width="160dp"
@@ -44,7 +45,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Pact"
-                android:textColor="#6C63FF"
+                android:textColor="#5A4FD8"
                 android:textSize="34sp"
                 android:fontFamily="sans-serif-medium"
                 android:letterSpacing="0.04"
@@ -63,6 +64,120 @@
             android:layout_marginTop="14dp"
             android:letterSpacing="0.04"
             android:alpha="0" />
+
+        <!-- Thin divider -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="80dp"
+            android:layout_height="1dp"
+            android:background="#2a2a2a"
+            android:layout_marginTop="22dp"
+            android:alpha="0" />
+
+        <!-- Three feature pills -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="28dp">
+
+            <LinearLayout
+                android:id="@+id/pill1"
+                android:layout_width="88dp"
+                android:layout_height="78dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_feature_pill"
+                android:alpha="0"
+                android:translationY="20dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_pill_clock"
+                    android:contentDescription="Time limits" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Time limits"
+                    android:textColor="#888888"
+                    android:textSize="10sp"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="per app"
+                    android:textColor="#888888"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/pill2"
+                android:layout_width="88dp"
+                android:layout_height="78dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_feature_pill"
+                android:layout_marginHorizontal="10dp"
+                android:alpha="0"
+                android:translationY="20dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_pill_lock"
+                    android:contentDescription="Uninstall protection" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Uninstall"
+                    android:textColor="#888888"
+                    android:textSize="10sp"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="protection"
+                    android:textColor="#888888"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/pill3"
+                android:layout_width="88dp"
+                android:layout_height="78dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_feature_pill"
+                android:alpha="0"
+                android:translationY="20dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_pill_group"
+                    android:contentDescription="Guardian approval" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Guardian"
+                    android:textColor="#888888"
+                    android:textSize="10sp"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="approval"
+                    android:textColor="#888888"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Bottom progress indicator -->
@@ -72,8 +187,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="64dp"
-        android:indeterminateTint="#6C63FF"
+        android:layout_marginBottom="48dp"
+        android:indeterminateTint="#5A4FD8"
         android:alpha="0" />
 
 </FrameLayout>
