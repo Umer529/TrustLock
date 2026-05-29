@@ -142,6 +142,7 @@ public class ScreenTimeMonitorService extends Service {
         checkMidnightReset();
         checkUsageAndEnforce();
         checkPendingApproval();
+        com.example.trustlock.util.PermissionMonitor.checkAndNotify(this);
     }
 
     private void checkUsageAndEnforce() {
@@ -286,9 +287,14 @@ public class ScreenTimeMonitorService extends Service {
             }
 
         } else if (ApprovalRequest.TYPE_UNINSTALL.equals(type)) {
+            if (approved) {
+                // Persist the approval so MainActivity can trigger the system uninstall
+                // dialog when the user taps the notification.
+                SessionManager.getInstance().setUninstallApproved(true);
+            }
             showApprovalNotification(
                     approved ? "Uninstall approved" : "Uninstall denied",
-                    approved ? "Open ScreenPact to complete the removal"
+                    approved ? "Tap to remove ScreenPact"
                              : "Your guardian rejected the request.",
                     buildMainIntent());
 

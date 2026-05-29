@@ -70,7 +70,13 @@ public class SettingsFragment extends Fragment {
 
             dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
                 @Override public void onApproved() {
-                    com.example.trustlock.util.SessionManager.getInstance().clearPendingRequest();
+                    com.example.trustlock.util.SessionManager session =
+                            com.example.trustlock.util.SessionManager.getInstance();
+                    session.clearPendingRequest();
+                    // Clear the deferred flag too — the dialog is handling the
+                    // uninstall now, so MainActivity shouldn't re-prompt on next
+                    // open even if the background poll raced and set it.
+                    session.setUninstallApproved(false);
                     deactivateAdminAndUninstall();
                 }
                 @Override public void onDenied() {
@@ -88,79 +94,6 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        loadWeeklyStats();
-    }
-
-    private void loadWeeklyStats() {
-        com.example.trustlock.util.DailyStatsManager statsManager =
-                new com.example.trustlock.util.DailyStatsManager(requireContext());
-        java.util.Map<String, Long> weeklyUsage = statsManager.getWeeklyTotalUsage(7);
-
-        if (weeklyUsage.isEmpty()) {
-            binding.tvNoStatsData.setVisibility(View.VISIBLE);
-            binding.weeklyStatsContainer.setVisibility(View.GONE);
-            return;
-        }
-
-        binding.tvNoStatsData.setVisibility(View.GONE);
-        binding.weeklyStatsContainer.setVisibility(View.VISIBLE);
-        binding.weeklyStatsContainer.removeAllViews();
-
-        for (int i = 6; i >= 0; i--) {
-            String date = com.example.trustlock.util.DailyStatsManager.getDateDaysAgo(i);
-            long minutes = weeklyUsage.getOrDefault(date, 0L);
-
-            android.widget.LinearLayout dayRow = new android.widget.LinearLayout(requireContext());
-            dayRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            dayRow.setPadding(0, 12, 0, 12);
-
-            android.widget.TextView tvDate = new android.widget.TextView(requireContext());
-            tvDate.setText(formatDate(date));
-            tvDate.setTextColor(requireContext().getColor(com.example.trustlock.R.color.text_primary));
-            tvDate.setTextSize(13);
-            tvDate.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-
-            android.widget.TextView tvMinutes = new android.widget.TextView(requireContext());
-            tvMinutes.setText(formatMinutes(minutes));
-            tvMinutes.setTextColor(requireContext().getColor(
-                    minutes > 60 ? com.example.trustlock.R.color.warning
-                    : com.example.trustlock.R.color.success));
-            tvMinutes.setTextSize(13);
-            tvMinutes.setTypeface(android.graphics.Typeface.defaultFromStyle(android.graphics.Typeface.BOLD));
-
-            dayRow.addView(tvDate);
-            dayRow.addView(tvMinutes);
-            binding.weeklyStatsContainer.addView(dayRow);
-
-            if (i > 0) {
-                android.view.View divider = new android.view.View(requireContext());
-                divider.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1));
-                divider.setBackgroundColor(requireContext().getColor(com.example.trustlock.R.color.outline));
-                binding.weeklyStatsContainer.addView(divider);
-            }
-        }
-    }
-
-    private String formatDate(String dateStr) {
-        try {
-            java.text.SimpleDateFormat inputFormat = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
-            java.text.SimpleDateFormat outputFormat = new java.text.SimpleDateFormat("EEE, MMM d", java.util.Locale.US);
-            java.util.Date date = inputFormat.parse(dateStr);
-            return outputFormat.format(date);
-        } catch (java.text.ParseException e) {
-            return dateStr;
-        }
-    }
-
-    private String formatMinutes(long minutes) {
-        if (minutes >= 60) {
-            long hours = minutes / 60;
-            long mins = minutes % 60;
-            return hours + "h " + mins + "m";
-        }
-        return minutes + "m";
     }
 
     @Override
@@ -168,7 +101,6 @@ public class SettingsFragment extends Fragment {
         super.onResume();
         updateAdminStatus();
         checkForApprovedUninstall();
-        loadWeeklyStats();
     }
 
     /** If the guardian approved while the dialog was dismissed, complete the uninstall now. */

@@ -5,8 +5,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.trustlock.R;
 import com.example.trustlock.databinding.ItemPermissionBinding;
 
 import java.util.List;
@@ -61,13 +63,52 @@ public class PermissionsAdapter extends RecyclerView.Adapter<PermissionsAdapter.
             binding.tvPermDesc.setText(item.getDescription());
             binding.ivPermIcon.setImageResource(item.getIconRes());
 
+            android.content.Context ctx = binding.getRoot().getContext();
+
             if (item.isGranted()) {
-                binding.btnGrant.setVisibility(View.GONE);
-                binding.ivGranted.setVisibility(View.VISIBLE);
+                // Settled / green look — no longer asking for action.
+                binding.cardRoot.setCardBackgroundColor(0); // let bg drawable show
+                binding.cardRoot.setBackgroundResource(R.drawable.bg_perm_card_granted);
+                binding.iconBackdrop.setBackgroundResource(R.drawable.bg_perm_icon_granted);
+                binding.ivPermIcon.setColorFilter(ContextCompat.getColor(ctx, R.color.success));
+
+                binding.ivGrantedCheck.setVisibility(View.VISIBLE);
+                binding.ivChevron.setVisibility(View.GONE);
+
+                binding.tvStatusPill.setText("GRANTED");
+                binding.tvStatusPill.setTextColor(ContextCompat.getColor(ctx, R.color.success));
+                binding.tvStatusPill.setBackgroundResource(R.drawable.bg_status_pill_granted);
+
+                binding.cardRoot.setOnClickListener(null);
+                binding.cardRoot.setClickable(false);
             } else {
-                binding.btnGrant.setVisibility(View.VISIBLE);
-                binding.ivGranted.setVisibility(View.GONE);
-                binding.btnGrant.setOnClickListener(v ->
+                // Action-needed look — purple icon + tappable card + chevron.
+                binding.cardRoot.setBackgroundResource(0);
+                binding.cardRoot.setCardBackgroundColor(
+                        ContextCompat.getColor(ctx, R.color.surface_variant));
+                binding.iconBackdrop.setBackgroundResource(R.drawable.bg_purple_circle);
+                binding.ivPermIcon.setColorFilter(
+                        ContextCompat.getColor(ctx, R.color.purple_light));
+
+                binding.ivGrantedCheck.setVisibility(View.GONE);
+                binding.ivChevron.setVisibility(View.VISIBLE);
+
+                if (item.isOptional()) {
+                    binding.tvStatusPill.setText("OPTIONAL");
+                    binding.tvStatusPill.setTextColor(
+                            ContextCompat.getColor(ctx, R.color.purple_light));
+                    binding.tvStatusPill.setBackgroundResource(
+                            R.drawable.bg_status_pill_optional);
+                } else {
+                    binding.tvStatusPill.setText("REQUIRED");
+                    binding.tvStatusPill.setTextColor(
+                            ContextCompat.getColor(ctx, R.color.error));
+                    binding.tvStatusPill.setBackgroundResource(
+                            R.drawable.bg_status_pill_required);
+                }
+
+                binding.cardRoot.setClickable(true);
+                binding.cardRoot.setOnClickListener(v ->
                         listener.onGrantClick(item, getAdapterPosition()));
             }
         }

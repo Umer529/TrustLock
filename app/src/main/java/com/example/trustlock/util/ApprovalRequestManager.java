@@ -131,4 +131,27 @@ public class ApprovalRequestManager {
             }
         });
     }
+
+    /**
+     * Sends an alert-only email to the guardian (no approve/deny buttons, no DB row).
+     * Use for one-way notifications like "ward disabled accessibility".
+     */
+    public void sendGuardianAlert(String guardianEmail, String description) {
+        if (guardianEmail == null || guardianEmail.isEmpty()) return;
+
+        String wardName = SessionManager.getInstance().getUserName();
+        if (wardName == null || wardName.isEmpty()) wardName = "Your ward";
+
+        SupabaseEdgeApi.SendEmailRequest req =
+                SupabaseEdgeApi.SendEmailRequest.alert(guardianEmail, wardName, description);
+
+        edge.sendApprovalEmail(req).enqueue(new Callback<Void>() {
+            @Override public void onResponse(Call<Void> c, Response<Void> r) {
+                if (!r.isSuccessful()) Log.e(TAG, "sendAlert failed: " + r.code());
+            }
+            @Override public void onFailure(Call<Void> c, Throwable t) {
+                Log.e(TAG, "sendAlert error", t);
+            }
+        });
+    }
 }

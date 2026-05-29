@@ -1,6 +1,10 @@
 package com.example.trustlock;
 
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -9,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.trustlock.databinding.ActivityMainBinding;
+import com.example.trustlock.receiver.ScreenPactDeviceAdminReceiver;
 import com.example.trustlock.service.ScreenTimeMonitorService;
 import com.example.trustlock.ui.permissions.PermissionsActivity;
 import com.example.trustlock.ui.welcome.WelcomeActivity;
@@ -95,6 +100,30 @@ public class MainActivity extends AppCompatActivity {
         if (UsageStatsHelper.hasUsagePermission(this)) {
             startMonitorService();
         }
+        checkApprovedUninstall();
+        // Catch any permission flips that happened while the foreground service
+        // wasn't running (e.g. force-stop, low-memory kill).
+        com.example.trustlock.util.PermissionMonitor.checkAndNotify(this);
+    }
+
+    /**
+     * If the guardian approved an uninstall while the app was backgrounded, the
+     * service flagged it in SessionManager. Consume the flag here and trigger
+     * the system uninstall dialog so the user can complete the removal.
+     */
+    private void checkApprovedUninstall() {
+        SessionManager session = SessionManager.getInstance();
+        if (!session.isUninstallApproved()) return;
+        session.setUninstallApproved(false);
+
+        DevicePolicyManager dpm =
+                (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName admin = new ComponentName(this, ScreenPactDeviceAdminReceiver.class);
+        if (dpm != null && dpm.isAdminActive(admin)) {
+            dpm.removeActiveAdmin(admin);
+        }
+        startActivity(new Intent(Intent.ACTION_DELETE,
+                Uri.parse("package:" + getPackageName())));
     }
 
     private void startMonitorService() {

@@ -1,35 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/background">
 
+    <!-- ── Header: brand logo + title + progress bar ──────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
-        android:paddingTop="48dp"
-        android:paddingBottom="20dp">
+        android:paddingTop="40dp"
+        android:paddingBottom="16dp">
+
+        <!-- Small brand chip -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:background="@drawable/bg_purple_chip"
+            android:layout_marginBottom="20dp">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_shield"
+                android:tint="@color/purple_light"
+                android:contentDescription="ScreenPact" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="SETUP"
+                android:textColor="@color/purple_light"
+                android:textSize="10sp"
+                android:letterSpacing="0.12"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Almost there"
+            android:text="One last thing"
             android:textColor="@color/text_primary"
             android:textSize="30sp"
             android:fontFamily="sans-serif-medium" />
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="ScreenPact needs these permissions to protect your screen time"
+            android:text="ScreenPact needs a few permissions before it can protect your screen time. Tap each one to grant it."
             android:textColor="@color/text_secondary"
             android:textSize="14sp"
             android:lineSpacingExtra="4dp" />
+
+        <!-- Progress: "X of Y granted" + thin progress bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="20dp">
+
+            <TextView
+                android:id="@+id/tvProgressLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0 of 4 required granted"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.04" />
+
+            <TextView
+                android:id="@+id/tvProgressPercent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0%"
+                android:textColor="@color/purple_light"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_marginTop="8dp"
+            android:progressDrawable="@drawable/bg_progress_fill"
+            android:max="100"
+            android:progress="0"
+            style="?android:attr/progressBarStyleHorizontal" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -38,6 +108,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:paddingHorizontal="20dp"
+        android:paddingTop="4dp"
         android:paddingBottom="8dp"
         android:clipToPadding="false" />
 
@@ -47,7 +118,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginHorizontal="24dp"
-        android:layout_marginBottom="36dp"
+        android:layout_marginBottom="32dp"
         android:layout_marginTop="8dp"
         android:enabled="false"
         android:text="Continue"

@@ -66,27 +66,27 @@ public class PermissionsActivity extends AppCompatActivity {
                         PermissionItem.Type.USAGE_ACCESS,
                         "Usage Access",
                         "Lets ScreenPact see how long you spend in each app",
-                        android.R.drawable.ic_menu_recent_history),
+                        android.R.drawable.ic_menu_recent_history, false),
                 new PermissionItem(
                         PermissionItem.Type.ACCESSIBILITY,
                         "Accessibility Service",
                         "Lets ScreenPact detect when a time-limited app is opened",
-                        android.R.drawable.ic_menu_view),
+                        android.R.drawable.ic_menu_view, false),
                 new PermissionItem(
                         PermissionItem.Type.OVERLAY,
                         "Display Over Other Apps",
                         "Allows the block screen to appear over limited apps",
-                        android.R.drawable.ic_menu_view),
+                        android.R.drawable.ic_menu_view, false),
                 new PermissionItem(
                         PermissionItem.Type.DEVICE_ADMIN,
                         "Device Admin",
                         "Prevents uninstall without guardian approval",
-                        android.R.drawable.ic_lock_lock),
+                        android.R.drawable.ic_lock_lock, true),
                 new PermissionItem(
                         PermissionItem.Type.NOTIFICATIONS,
                         "Notifications",
                         "Sends alerts when limits are reached or requests need approval",
-                        android.R.drawable.ic_dialog_info)
+                        android.R.drawable.ic_dialog_info, false)
         );
     }
 
@@ -178,13 +178,28 @@ public class PermissionsActivity extends AppCompatActivity {
     }
 
     private void updateContinueButton() {
-        boolean coreGranted = true;
+        int requiredTotal   = 0;
+        int requiredGranted = 0;
         for (PermissionItem item : permissionItems) {
-            // Device Admin is optional — uninstall protection won't work without it,
-            // but the core screen-time features are unaffected.
-            if (item.getType() == PermissionItem.Type.DEVICE_ADMIN) continue;
-            if (!item.isGranted()) { coreGranted = false; break; }
+            if (item.isOptional()) continue;
+            requiredTotal++;
+            if (item.isGranted()) requiredGranted++;
         }
+        boolean coreGranted = requiredGranted == requiredTotal;
         binding.btnContinue.setEnabled(coreGranted);
+
+        // Update the header progress strip.
+        binding.tvProgressLabel.setText(
+                requiredGranted + " of " + requiredTotal + " required granted");
+        int percent = requiredTotal == 0 ? 0 : (requiredGranted * 100 / requiredTotal);
+        binding.tvProgressPercent.setText(percent + "%");
+
+        // Animate the progress bar smoothly to the new value.
+        int currentProgress = binding.progressBar.getProgress();
+        android.animation.ObjectAnimator anim = android.animation.ObjectAnimator.ofInt(
+                binding.progressBar, "progress", currentProgress, percent);
+        anim.setDuration(350);
+        anim.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        anim.start();
     }
 }

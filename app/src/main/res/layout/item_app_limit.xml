@@ -70,8 +70,8 @@
             android:layout_marginStart="10dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Edit limit"
-            android:src="@android:drawable/ic_menu_edit"
-            android:tint="@color/text_secondary" />
+            android:src="@drawable/ic_edit"
+            app:tint="@color/text_secondary" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

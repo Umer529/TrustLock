@@ -76,5 +76,16 @@ public class SessionManager {
                 .apply();
     }
 
+    // ── Approved uninstall (set by service, consumed by MainActivity) ──────────
+    private static final String KEY_UNINSTALL_APPROVED = "uninstall_approved";
+
+    public boolean isUninstallApproved() {
+        return prefs.getBoolean(KEY_UNINSTALL_APPROVED, false);
+    }
+
+    public void setUninstallApproved(boolean approved) {
+        prefs.edit().putBoolean(KEY_UNINSTALL_APPROVED, approved).apply();
+    }
+
     public void clear() { prefs.edit().clear().apply(); }
 }

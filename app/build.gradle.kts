@@ -1,5 +1,18 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
+}
+
+// Load release-signing credentials from keys/signing.properties (gitignored).
+// If the file is missing the release build is left unsigned so debug-only
+// developers don't hit "missing keystore" errors.
+val signingPropsFile = rootProject.file("keys/signing.properties")
+val signingProps = Properties().apply {
+    if (signingPropsFile.exists()) {
+        load(FileInputStream(signingPropsFile))
+    }
 }
 
 android {
@@ -15,6 +28,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            if (signingPropsFile.exists()) {
+                storeFile     = rootProject.file(signingProps["storeFile"] as String)
+                storePassword = signingProps["storePassword"] as String
+                keyAlias      = signingProps["keyAlias"]      as String
+                keyPassword   = signingProps["keyPassword"]   as String
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -23,6 +47,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (signingPropsFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

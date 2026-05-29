@@ -1,4 +1,5 @@
 node_modules/
+**/node_modules/
 supabase/.branches/
 supabase/.temp/
 *.iml
@@ -16,3 +17,26 @@ supabase/.temp/
 .externalNativeBuild
 .cxx
 local.properties
+
+# Release signing — keystore + password must never be committed
+keys/
+
+# Build / debugging output — never commit
+*_output.txt
+build_output.txt
+rebuild_output.txt
+*.log
+hs_err_pid*
+
+# Android build artifacts (nested, in case generated outside /build)
+**/build/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Editor/IDE
+*.swp
+*.swo
+.vscode/
+.history/
