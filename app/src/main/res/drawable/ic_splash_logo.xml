@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shield + lock logo extracted from screenpact_splash_screen.svg.
+     Coordinates re-centered into a 200x200 viewport. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="160dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Outer glow ring -->
+    <path
+        android:pathData="M100,100 m-90,0 a90,90 0,1,0 180,0 a90,90 0,1,0 -180,0"
+        android:fillColor="#6C63FF"
+        android:fillAlpha="0.06" />
+
+    <!-- Inner glow -->
+    <path
+        android:pathData="M100,100 m-60,0 a60,60 0,1,0 120,0 a60,60 0,1,0 -120,0"
+        android:fillColor="#6C63FF"
+        android:fillAlpha="0.10" />
+
+    <!-- Shield outer -->
+    <path
+        android:pathData="M100,15 L160,40 L160,105 Q160,155 100,185 Q40,155 40,105 L40,40 Z"
+        android:fillColor="#1a1a1a"
+        android:strokeColor="#6C63FF"
+        android:strokeWidth="2.5" />
+
+    <!-- Shield inner accent -->
+    <path
+        android:pathData="M100,30 L150,51 L150,103 Q150,145 100,171 Q50,145 50,103 L50,51 Z"
+        android:fillColor="#6C63FF"
+        android:fillAlpha="0.15" />
+
+    <!-- Clock arc -->
+    <path
+        android:pathData="M68,65 Q68,45 100,45 Q132,45 132,65"
+        android:strokeColor="#6C63FF"
+        android:strokeAlpha="0.5"
+        android:strokeWidth="1.5"
+        android:fillColor="@android:color/transparent" />
+
+    <!-- Lock body -->
+    <path
+        android:pathData="M86,101 L114,101 Q118,101 118,105 L118,119 Q118,123 114,123 L86,123 Q82,123 82,119 L82,105 Q82,101 86,101 Z"
+        android:fillColor="#6C63FF" />
+
+    <!-- Lock shackle -->
+    <path
+        android:pathData="M91,101 L91,93 Q91,83 100,83 Q109,83 109,93 L109,101"
+        android:strokeColor="#6C63FF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent" />
+
+    <!-- Keyhole -->
+    <path
+        android:pathData="M100,110 m-3,0 a3,3 0,1,0 6,0 a3,3 0,1,0 -6,0"
+        android:fillColor="#0F0F0F" />
+    <path
+        android:pathData="M98.5,110 L101.5,110 L101.5,115 L98.5,115 Z"
+        android:fillColor="#0F0F0F" />
+</vector>

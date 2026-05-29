@@ -5,6 +5,7 @@ public class PermissionItem {
     public enum Type {
         USAGE_ACCESS,
         ACCESSIBILITY,
+        OVERLAY,
         DEVICE_ADMIN,
         NOTIFICATIONS
     }

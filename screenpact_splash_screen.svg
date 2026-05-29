@@ -1,0 +1,88 @@
+<svg width="100%" viewBox="0 0 680 880" role="img" style="" xmlns="http://www.w3.org/2000/svg">
+  <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">ScreenPact splash screen design</title>
+  <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">ScreenPact app splash screen with shield logo, app name, and tagline on dark background</desc>
+
+  <defs>
+    <clipPath id="phoneClip">
+      <rect x="190" y="40" width="300" height="800" rx="40"/>
+    </clipPath>
+  </defs>
+
+  <!-- Phone body -->
+  <rect x="190" y="40" width="300" height="800" rx="40" fill="#111111" stroke="#2a2a2a" stroke-width="2" style="fill:rgb(17, 17, 17);stroke:rgb(42, 42, 42);color:rgb(255, 255, 255);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Phone screen background -->
+  <rect x="190" y="40" width="300" height="800" rx="40" fill="#0F0F0F" clip-path="url(#phoneClip)" style="fill:rgb(15, 15, 15);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Status bar notch -->
+  <rect x="295" y="52" width="90" height="18" rx="9" fill="#1a1a1a" style="fill:rgb(26, 26, 26);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Subtle radial glow behind logo -->
+  <ellipse cx="340" cy="380" rx="100" ry="100" fill="#6C63FF" opacity="0.08" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.08;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <ellipse cx="340" cy="380" rx="70" ry="70" fill="#6C63FF" opacity="0.07" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.07;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Shield outer shape -->
+  <path d="M340 280 L400 305 L400 370 Q400 420 340 450 Q280 420 280 370 L280 305 Z" fill="#1a1a1a" stroke="#6C63FF" stroke-width="2.5" style="fill:rgb(26, 26, 26);stroke:rgb(108, 99, 255);color:rgb(255, 255, 255);stroke-width:2.5px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Shield inner accent -->
+  <path d="M340 295 L390 316 L390 368 Q390 410 340 436 Q290 410 290 368 L290 316 Z" fill="#6C63FF" opacity="0.15" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.15;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Lock icon inside shield -->
+  <!-- Lock body -->
+  <rect x="326" y="366" width="28" height="22" rx="4" fill="#6C63FF" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <!-- Lock shackle -->
+  <path d="M331 366 L331 358 Q331 348 340 348 Q349 348 349 358 L349 366" fill="none" stroke="#6C63FF" stroke-width="3" stroke-linecap="round" style="fill:none;stroke:rgb(108, 99, 255);color:rgb(255, 255, 255);stroke-width:3px;stroke-linecap:round;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <!-- Keyhole dot -->
+  <circle cx="340" cy="375" r="3" fill="#0F0F0F" style="fill:rgb(15, 15, 15);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <!-- Keyhole stem -->
+  <rect x="338.5" y="375" width="3" height="5" rx="1" fill="#0F0F0F" style="fill:rgb(15, 15, 15);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Clock arc overlay on shield (screen time symbol) -->
+  <path d="M308 330 Q308 310 340 310 Q372 310 372 330" fill="none" stroke="#6C63FF" stroke-width="1.5" opacity="0.5" stroke-dasharray="4 3" style="fill:none;stroke:rgb(108, 99, 255);color:rgb(255, 255, 255);stroke-width:1.5px;stroke-dasharray:4px, 3px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.5;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- App name -->
+  <text x="340" y="492" text-anchor="middle" font-family="sans-serif" font-size="28" font-weight="600" fill="#FFFFFF" letter-spacing="1" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:28px;font-weight:600;text-anchor:middle;dominant-baseline:auto">Screen</text>
+  <text x="340" y="492" text-anchor="middle" font-family="sans-serif" font-size="28" font-weight="600" fill="#6C63FF" letter-spacing="1" dx="62" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:28px;font-weight:600;text-anchor:middle;dominant-baseline:auto">Pact</text>
+
+  <!-- Rewrite as single line properly -->
+  <text x="340" y="492" text-anchor="middle" font-family="sans-serif" font-size="28" font-weight="600" letter-spacing="1" style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:28px;font-weight:600;text-anchor:middle;dominant-baseline:auto">
+    <tspan fill="#FFFFFF" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:28px;font-weight:600;text-anchor:middle;dominant-baseline:auto">Screen</tspan><tspan fill="#6C63FF" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:28px;font-weight:600;text-anchor:middle;dominant-baseline:auto">Pact</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="340" y="524" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="400" fill="#888888" letter-spacing="0.5" style="fill:rgb(136, 136, 136);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:13px;font-weight:400;text-anchor:middle;dominant-baseline:auto">Screen time you can't cheat</text>
+
+  <!-- Divider line -->
+  <line x1="300" y1="548" x2="380" y2="548" stroke="#2a2a2a" stroke-width="1" style="fill:rgb(0, 0, 0);stroke:rgb(42, 42, 42);color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Three feature pills at bottom -->
+  <!-- Pill 1 -->
+  <rect x="210" y="620" width="80" height="70" rx="16" fill="#1a1a1a" style="fill:rgb(26, 26, 26);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <text x="250" y="648" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#6C63FF" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:20px;font-weight:400;text-anchor:middle;dominant-baseline:auto">⏱</text>
+  <text x="250" y="668" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#888888" style="fill:rgb(136, 136, 136);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:10px;font-weight:400;text-anchor:middle;dominant-baseline:auto">Time limits</text>
+  <text x="250" y="682" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#888888" style="fill:rgb(136, 136, 136);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:10px;font-weight:400;text-anchor:middle;dominant-baseline:auto">per app</text>
+
+  <!-- Pill 2 -->
+  <rect x="300" y="620" width="80" height="70" rx="16" fill="#1a1a1a" style="fill:rgb(26, 26, 26);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <text x="340" y="648" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#6C63FF" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:20px;font-weight:400;text-anchor:middle;dominant-baseline:auto">🔒</text>
+  <text x="340" y="668" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#888888" style="fill:rgb(136, 136, 136);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:10px;font-weight:400;text-anchor:middle;dominant-baseline:auto">Uninstall</text>
+  <text x="340" y="682" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#888888" style="fill:rgb(136, 136, 136);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:10px;font-weight:400;text-anchor:middle;dominant-baseline:auto">protection</text>
+
+  <!-- Pill 3 -->
+  <rect x="390" y="620" width="80" height="70" rx="16" fill="#1a1a1a" style="fill:rgb(26, 26, 26);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <text x="430" y="648" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#6C63FF" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:20px;font-weight:400;text-anchor:middle;dominant-baseline:auto">👥</text>
+  <text x="430" y="668" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#888888" style="fill:rgb(136, 136, 136);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:10px;font-weight:400;text-anchor:middle;dominant-baseline:auto">Guardian</text>
+  <text x="430" y="682" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#888888" style="fill:rgb(136, 136, 136);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:10px;font-weight:400;text-anchor:middle;dominant-baseline:auto">approval</text>
+
+  <!-- Get Started button -->
+  <rect x="230" y="720" width="220" height="48" rx="24" fill="#6C63FF" style="fill:rgb(108, 99, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <text x="340" y="750" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="500" fill="#FFFFFF" letter-spacing="0.5" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:sans-serif;font-size:15px;font-weight:500;text-anchor:middle;dominant-baseline:auto">Get Started</text>
+
+  <!-- Bottom home indicator -->
+  <rect x="305" y="800" width="70" height="4" rx="2" fill="#333333" style="fill:rgb(51, 51, 51);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Phone side buttons -->
+  <rect x="188" y="180" width="4" height="40" rx="2" fill="#222222" style="fill:rgb(34, 34, 34);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <rect x="188" y="230" width="4" height="60" rx="2" fill="#222222" style="fill:rgb(34, 34, 34);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <rect x="488" y="200" width="4" height="50" rx="2" fill="#222222" style="fill:rgb(34, 34, 34);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+</svg>

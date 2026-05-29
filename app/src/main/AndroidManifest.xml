@@ -21,6 +21,12 @@
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
+    <!-- Allows the foreground monitor service to launch BlockedAppActivity from the
+         background and to draw an overlay over other apps. Acts as a fallback when
+         the Accessibility Service has been disabled. User grants via
+         Settings → Apps → Special access → Display over other apps. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <!-- NOTE: BIND_ACCESSIBILITY_SERVICE and BIND_DEVICE_ADMIN are system-level
          permissions that protect our service/receiver from non-system binding.
          They are declared on the component, not here in uses-permission. -->
@@ -37,14 +43,21 @@
         android:theme="@style/Theme.TrustLock">
 
         <!-- ─── Activities ──────────────────────────────────────────────── -->
+
+        <!-- Animated splash; routes to MainActivity if signed in, else Welcome. -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".ui.splash.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.TrustLock.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
 
         <activity
             android:name=".ui.welcome.WelcomeActivity"

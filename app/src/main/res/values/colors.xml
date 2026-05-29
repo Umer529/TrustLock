@@ -12,6 +12,7 @@
 
     <!-- Backgrounds -->
     <color name="background">#0D0D17</color>
+    <color name="splash_background">#0F0F0F</color>
     <color name="surface">#14141F</color>
     <color name="surface_variant">#1E1E2E</color>
     <color name="surface_elevated">#252538</color>

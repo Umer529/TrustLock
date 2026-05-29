@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F0F0F">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Shield + lock logo -->
+        <ImageView
+            android:id="@+id/ivLogo"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:src="@drawable/ic_splash_logo"
+            android:alpha="0"
+            android:contentDescription="ScreenPact logo" />
+
+        <!-- App name row: clean two-tone (no overlap) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="28dp">
+
+            <TextView
+                android:id="@+id/tvBrandPrefix"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Screen"
+                android:textColor="#FFFFFF"
+                android:textSize="34sp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.04"
+                android:alpha="0"
+                android:translationX="-40dp" />
+
+            <TextView
+                android:id="@+id/tvBrandSuffix"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pact"
+                android:textColor="#6C63FF"
+                android:textSize="34sp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.04"
+                android:alpha="0"
+                android:translationX="40dp" />
+        </LinearLayout>
+
+        <!-- Tagline -->
+        <TextView
+            android:id="@+id/tvTagline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Screen time you can't cheat"
+            android:textColor="#888888"
+            android:textSize="14sp"
+            android:layout_marginTop="14dp"
+            android:letterSpacing="0.04"
+            android:alpha="0" />
+    </LinearLayout>
+
+    <!-- Bottom progress indicator -->
+    <ProgressBar
+        android:id="@+id/progress"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="64dp"
+        android:indeterminateTint="#6C63FF"
+        android:alpha="0" />
+
+</FrameLayout>

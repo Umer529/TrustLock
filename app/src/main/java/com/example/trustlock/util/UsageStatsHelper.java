@@ -24,6 +24,17 @@ public final class UsageStatsHelper {
     }
 
     /**
+     * Returns usage minutes for the package since its limit was applied today.
+     * If the limit was added mid-day, this excludes the usage that happened before.
+     */
+    public static long getEffectiveUsageMinutes(Context context, String packageName) {
+        long total = getTodayUsageMinutes(context, packageName);
+        long baseline = new BlockedAppsManager(context).getUsageBaseline(packageName);
+        long effective = total - baseline;
+        return effective > 0 ? effective : 0;
+    }
+
+    /**
      * Returns the total foreground minutes for one package today (midnight → now).
      * Returns 0 if the permission is not granted or the app has no usage data.
      */

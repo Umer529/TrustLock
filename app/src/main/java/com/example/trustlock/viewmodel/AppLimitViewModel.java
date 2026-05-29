@@ -128,7 +128,14 @@ public class AppLimitViewModel extends AndroidViewModel {
                         });
             });
         } else {
-            // New limit — no guardian approval needed
+            // New limit — no guardian approval needed.
+            // Capture today's usage as the baseline so enforcement starts FROM NOW,
+            // not from midnight — anything used before this point should not count.
+            long baselineMinutes = UsageStatsHelper.getTodayUsageMinutes(
+                    context, newLimit.getPackageName());
+            new com.example.trustlock.util.BlockedAppsManager(context)
+                    .setUsageBaseline(newLimit.getPackageName(), baselineMinutes);
+
             newLimit.setActive(true);
             String uid = userId;
             userRepository.saveAppLimit(uid, newLimit, () -> {
@@ -191,7 +198,7 @@ public class AppLimitViewModel extends AndroidViewModel {
     public void clearPendingApproval() { pendingApproval.setValue(null); }
 
     public long getTodayUsageMinutes(String packageName) {
-        return UsageStatsHelper.getTodayUsageMinutes(context, packageName);
+        return UsageStatsHelper.getEffectiveUsageMinutes(context, packageName);
     }
 
     // ─── Private helpers ─────────────────────────────────────────────────────
@@ -211,9 +218,12 @@ public class AppLimitViewModel extends AndroidViewModel {
     }
 
     private void executeDeleteLimit(String userId, String packageName) {
-        // Optimistic removal from UI
         removeInMemory(packageName);
-
+        // Immediately clear from blocked set so the app is accessible right away
+        com.example.trustlock.util.BlockedAppsManager mgr =
+                new com.example.trustlock.util.BlockedAppsManager(context);
+        mgr.unblockApp(packageName);
+        mgr.clearUsageBaseline(packageName);
         userRepository.deleteAppLimit(userId, packageName);
         localRepository.deleteLimit(userId, packageName);
         limitSaved.postValue(true);

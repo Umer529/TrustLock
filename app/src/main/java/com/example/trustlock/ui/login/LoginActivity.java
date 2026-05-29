@@ -128,9 +128,13 @@ public class LoginActivity extends AppCompatActivity {
         return et.getText() != null ? et.getText().toString().trim() : "";
     }
 
-    /** Returns true only when both Usage Access and the Accessibility Service are enabled. */
+    /**
+     * Core = Usage Access + Accessibility + Overlay. All three are needed for
+     * blocking to work reliably; if any is missing, route the user through
+     * PermissionsActivity to grant it.
+     */
     private boolean hasCorePermissions() {
-        return hasUsageAccess() && isAccessibilityEnabled();
+        return hasUsageAccess() && isAccessibilityEnabled() && Settings.canDrawOverlays(this);
     }
 
     private boolean hasUsageAccess() {

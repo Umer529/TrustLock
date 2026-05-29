@@ -65,7 +65,7 @@ public class AppLimitAdapter extends RecyclerView.Adapter<AppLimitAdapter.ViewHo
         void bind(AppLimit limit) {
             binding.tvAppName.setText(limit.getAppName());
 
-            long usedMinutes = UsageStatsHelper.getTodayUsageMinutes(
+            long usedMinutes = UsageStatsHelper.getEffectiveUsageMinutes(
                     binding.getRoot().getContext(), limit.getPackageName());
             int limitMinutes = limit.getDailyLimitMinutes();
 

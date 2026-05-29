@@ -4,6 +4,8 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.usage.UsageEvents;
+import android.app.usage.UsageStatsManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Handler;
@@ -20,6 +22,7 @@ import com.example.trustlock.ScreenPactApp;
 import com.example.trustlock.data.SupabaseClient;
 import com.example.trustlock.models.AppLimit;
 import com.example.trustlock.models.ApprovalRequest;
+import com.example.trustlock.ui.blocked.BlockedAppActivity;
 import com.example.trustlock.util.BlockedAppsManager;
 import com.example.trustlock.util.SessionManager;
 import com.example.trustlock.util.UsageStatsHelper;
@@ -40,14 +43,15 @@ public class ScreenTimeMonitorService extends Service {
 
     private static final String TAG             = "ScreenTimeMonitor";
     private static final int    NOTIFICATION_ID = 1001;
-    private static final long   INTERVAL_MS     = 60_000L;
-    private static final int    LIMITS_REFRESH_TICKS = 5;
+    private static final long   INTERVAL_MS     = 20_000L;
+    private static final int    LIMITS_REFRESH_TICKS = 15;
 
     private static final AtomicInteger APPROVAL_NOTIF_ID = new AtomicInteger(2000);
 
-    private Handler             handler;
-    private Runnable            monitorRunnable;
-    private BlockedAppsManager  blockedAppsManager;
+    private Handler            handler;
+    private Runnable           monitorRunnable;
+    private BlockedAppsManager blockedAppsManager;
+    private com.example.trustlock.util.DailyStatsManager statsManager;
 
     private final Map<String, Integer> limitsCache = new HashMap<>();
     private int tickCount = 0;
@@ -56,6 +60,7 @@ public class ScreenTimeMonitorService extends Service {
     public void onCreate() {
         super.onCreate();
         blockedAppsManager = new BlockedAppsManager(this);
+        statsManager = new com.example.trustlock.util.DailyStatsManager(this);
         handler = new Handler(Looper.getMainLooper());
         monitorRunnable = new Runnable() {
             @Override public void run() {
@@ -68,9 +73,56 @@ public class ScreenTimeMonitorService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(NOTIFICATION_ID, buildNotification());
-        refreshLimitsCache();
-        handler.post(monitorRunnable);
+        refreshLimitsCacheThenStart();
         return START_STICKY;
+    }
+
+    private void refreshLimitsCacheThenStart() {
+        String userId = SessionManager.getInstance().getUserId();
+        if (userId == null) {
+            handler.postDelayed(monitorRunnable, INTERVAL_MS);
+            return;
+        }
+        SupabaseClient.getInstance().db()
+                .getAppLimits("eq." + userId, "app_name.asc")
+                .enqueue(new Callback<List<AppLimit>>() {
+                    @Override public void onResponse(Call<List<AppLimit>> call,
+                                                     Response<List<AppLimit>> r) {
+                        if (r.isSuccessful() && r.body() != null) {
+                            limitsCache.clear();
+                            for (AppLimit limit : r.body()) {
+                                if (limit.isActive() && limit.getDailyLimitMinutes() > 0) {
+                                    limitsCache.put(limit.getPackageName(),
+                                            limit.getDailyLimitMinutes());
+                                }
+                            }
+                            ensureBaselinesForCache();
+                            Log.d(TAG, "Initial limits loaded: " + limitsCache.size());
+                        }
+                        handler.post(monitorRunnable);
+                    }
+                    @Override public void onFailure(Call<List<AppLimit>> call, Throwable t) {
+                        Log.e(TAG, "Initial limits load failed", t);
+                        handler.postDelayed(monitorRunnable, INTERVAL_MS);
+                    }
+                });
+    }
+
+    /**
+     * For every package in limitsCache that has no baseline yet, snapshot today's
+     * current usage as the baseline. This covers limits created before this update
+     * was installed and limits added remotely by the guardian — both should also
+     * "start now" rather than retroactively count usage since midnight.
+     */
+    private void ensureBaselinesForCache() {
+        Map<String, Long> usageMap = UsageStatsHelper.getAllAppsUsageToday(this);
+        for (String pkg : limitsCache.keySet()) {
+            if (!blockedAppsManager.hasUsageBaseline(pkg)) {
+                long now = usageMap.containsKey(pkg) ? usageMap.get(pkg) : 0L;
+                blockedAppsManager.setUsageBaseline(pkg, now);
+                Log.d(TAG, "Retroactive baseline for " + pkg + " = " + now);
+            }
+        }
     }
 
     @Override
@@ -93,29 +145,100 @@ public class ScreenTimeMonitorService extends Service {
     }
 
     private void checkUsageAndEnforce() {
-        if (limitsCache.isEmpty()) return;
+        if (!UsageStatsHelper.hasUsagePermission(this)) {
+            Log.w(TAG, "No usage stats permission!");
+            return;
+        }
+
         Map<String, Long> usageMap = UsageStatsHelper.getAllAppsUsageToday(this);
+        String foreground = getForegroundApp();
+        Log.d(TAG, "Checking " + limitsCache.size() + " limits, foreground=" + foreground);
+
         for (Map.Entry<String, Integer> entry : limitsCache.entrySet()) {
-            String pkg = entry.getKey();
-            int limitMinutes = entry.getValue();
-            long usedMinutes = usageMap.containsKey(pkg) ? usageMap.get(pkg) : 0L;
-            if (usedMinutes >= limitMinutes) {
+            String pkg         = entry.getKey();
+            int    limitMins   = entry.getValue();
+            long   totalToday  = usageMap.containsKey(pkg) ? usageMap.get(pkg) : 0L;
+            long   baseline    = blockedAppsManager.getUsageBaseline(pkg);
+            long   usedMins    = Math.max(0L, totalToday - baseline);
+
+            if (usedMins >= limitMins) {
                 if (!blockedAppsManager.isInGracePeriod(pkg)) {
-                    blockedAppsManager.blockApp(pkg, limitMinutes);
-                    Log.d(TAG, "Blocked: " + pkg + " (" + usedMinutes + "/" + limitMinutes + " min)");
+                    blockedAppsManager.blockApp(pkg, limitMins);
                 }
             } else {
-                if (blockedAppsManager.isBlocked(pkg)) blockedAppsManager.unblockApp(pkg);
+                if (blockedAppsManager.isBlocked(pkg)) {
+                    blockedAppsManager.unblockApp(pkg);
+                }
             }
         }
+
+        // Single foreground enforcement: if the current foreground app is blocked
+        // (and not in grace), kick it out. Works as the primary path when the
+        // Accessibility Service is disabled (overlay permission allows the launch).
+        if (foreground != null
+                && blockedAppsManager.isBlocked(foreground)
+                && !blockedAppsManager.isInGracePeriod(foreground)) {
+            launchBlockScreen(foreground);
+            Log.d(TAG, "Kicked out foreground app: " + foreground);
+        }
+
+        // Unblock any app that is still marked blocked but no longer has a limit set.
+        blockedAppsManager.unblockAppsNotIn(limitsCache.keySet());
     }
 
     private void checkMidnightReset() {
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
-        if (!today.equals(blockedAppsManager.getLastResetDate())) {
+        String lastReset = blockedAppsManager.getLastResetDate();
+        if (!today.equals(lastReset)) {
+            // Save yesterday's usage before resetting
+            if (!lastReset.isEmpty()) {
+                Map<String, Long> yesterdayUsage = UsageStatsHelper.getAllAppsUsageToday(this);
+                statsManager.saveDailySnapshot(lastReset, yesterdayUsage);
+                Log.d(TAG, "Saved daily snapshot for " + lastReset);
+            }
             blockedAppsManager.resetAllAtMidnight();
             blockedAppsManager.setLastResetDate(today);
+            Log.d(TAG, "Midnight reset: cleared all blocked apps");
         }
+    }
+
+    // ─── Foreground app detection ─────────────────────────────────────────────
+
+    /**
+     * Returns the package currently in the foreground (or null if the system /
+     * launcher is). Events are returned in chronological order, so we replay them:
+     * each MOVE_TO_FOREGROUND sets the current app; a matching MOVE_TO_BACKGROUND
+     * clears it. The window is wide enough to catch sessions that began long
+     * before the current tick.
+     */
+    private String getForegroundApp() {
+        if (!UsageStatsHelper.hasUsagePermission(this)) return null;
+        UsageStatsManager usm =
+                (UsageStatsManager) getSystemService(USAGE_STATS_SERVICE);
+        long now = System.currentTimeMillis();
+        UsageEvents events = usm.queryEvents(now - 60 * 60_000L, now); // last hour
+        UsageEvents.Event event = new UsageEvents.Event();
+        String currentForeground = null;
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event);
+            int type = event.getEventType();
+            if (type == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                currentForeground = event.getPackageName();
+            } else if (type == UsageEvents.Event.MOVE_TO_BACKGROUND
+                    && event.getPackageName().equals(currentForeground)) {
+                currentForeground = null;
+            }
+        }
+        return currentForeground;
+    }
+
+    private void launchBlockScreen(String packageName) {
+        Intent intent = new Intent(this, BlockedAppActivity.class);
+        intent.putExtra(BlockedAppActivity.EXTRA_PACKAGE_NAME, packageName);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 
     // ─── Background approval polling ─────────────────────────────────────────
@@ -147,7 +270,7 @@ public class ScreenTimeMonitorService extends Service {
     }
 
     private void handleApprovalResult(String type, String status,
-                                       String packageName, java.util.Map<String, Object> payload) {
+                                       String packageName, Map<String, Object> payload) {
         boolean approved = ApprovalRequest.STATUS_APPROVED.equals(status);
 
         if (ApprovalRequest.TYPE_EXTRA_TIME.equals(type)) {
@@ -187,38 +310,33 @@ public class ScreenTimeMonitorService extends Service {
         }
     }
 
-    private void applyLimitFromPayload(java.util.Map<String, Object> payload) {
+    private void applyLimitFromPayload(Map<String, Object> payload) {
         String userId = SessionManager.getInstance().getUserId();
         if (userId == null) return;
 
-        String pkgName = (String) payload.get("packageName");
-        String appName = (String) payload.get("appName");
+        String pkgName    = (String) payload.get("packageName");
+        String appName    = (String) payload.get("appName");
         Object newMinsObj = payload.get("newLimitMinutes");
         if (pkgName == null || newMinsObj == null) return;
-
         int newMins = ((Number) newMinsObj).intValue();
 
-        com.example.trustlock.data.UserRepository repo =
-                new com.example.trustlock.data.UserRepository();
-        repo.updateAppLimit(userId, pkgName, newMins, () -> {
-            // Also update Room so the UI is correct on next open
-            com.example.trustlock.data.local.AppLimitEntity entity =
-                    new com.example.trustlock.data.local.AppLimitEntity();
-            entity.userId            = userId;
-            entity.packageName       = pkgName;
-            entity.appName           = appName;
-            entity.dailyLimitMinutes = newMins;
-            entity.active            = true;
-            new com.example.trustlock.data.LocalRepository(getApplication())
-                    .saveLimit(entity);
+        new com.example.trustlock.data.UserRepository()
+                .updateAppLimit(userId, pkgName, newMins, () -> {
+                    com.example.trustlock.data.local.AppLimitEntity entity =
+                            new com.example.trustlock.data.local.AppLimitEntity();
+                    entity.userId            = userId;
+                    entity.packageName       = pkgName;
+                    entity.appName           = appName;
+                    entity.dailyLimitMinutes = newMins;
+                    entity.active            = true;
+                    new com.example.trustlock.data.LocalRepository(getApplication())
+                            .saveLimit(entity);
 
-            showApprovalNotification("Limit change approved",
-                    appName + " is now limited to " + formatMinutes(newMins),
-                    buildMainIntent());
-
-            // Refresh the monitor's cache so enforcement picks up the new limit
-            limitsCache.put(pkgName, newMins);
-        });
+                    showApprovalNotification("Limit updated",
+                            appName + " is now limited to " + formatMinutes(newMins),
+                            buildMainIntent());
+                    limitsCache.put(pkgName, newMins);
+                });
     }
 
     private void removeLimitForPackage(String packageName, Map<String, Object> payload) {
@@ -232,6 +350,8 @@ public class ScreenTimeMonitorService extends Service {
         new com.example.trustlock.data.LocalRepository(getApplication())
                 .deleteLimit(userId, packageName);
         blockedAppsManager.unblockApp(packageName);
+        blockedAppsManager.clearUsageBaseline(packageName);
+        limitsCache.remove(packageName);
 
         showApprovalNotification("Limit removed",
                 "The daily limit for " + appName + " has been removed.",
@@ -241,6 +361,37 @@ public class ScreenTimeMonitorService extends Service {
     private String formatMinutes(int minutes) {
         return minutes >= 60 ? (minutes / 60) + "h " + (minutes % 60) + "m" : minutes + "m";
     }
+
+    // ─── Supabase limits refresh ──────────────────────────────────────────────
+
+    private void refreshLimitsCache() {
+        String userId = SessionManager.getInstance().getUserId();
+        if (userId == null) return;
+        SupabaseClient.getInstance().db()
+                .getAppLimits("eq." + userId, "app_name.asc")
+                .enqueue(new Callback<List<AppLimit>>() {
+                    @Override public void onResponse(Call<List<AppLimit>> call,
+                                                     Response<List<AppLimit>> r) {
+                        if (!r.isSuccessful() || r.body() == null) return;
+                        limitsCache.clear();
+                        for (AppLimit limit : r.body()) {
+                            if (limit.isActive() && limit.getDailyLimitMinutes() > 0) {
+                                limitsCache.put(limit.getPackageName(),
+                                        limit.getDailyLimitMinutes());
+                            }
+                        }
+                        ensureBaselinesForCache();
+                        // Unblock any app that had a limit which was just removed
+                        blockedAppsManager.unblockAppsNotIn(limitsCache.keySet());
+                        Log.d(TAG, "Limits refreshed: " + limitsCache.size());
+                    }
+                    @Override public void onFailure(Call<List<AppLimit>> call, Throwable t) {
+                        Log.e(TAG, "refreshLimitsCache error", t);
+                    }
+                });
+    }
+
+    // ─── Notifications ────────────────────────────────────────────────────────
 
     private void showApprovalNotification(String title, String text, PendingIntent tapIntent) {
         NotificationManager nm = getSystemService(NotificationManager.class);
@@ -270,32 +421,6 @@ public class ScreenTimeMonitorService extends Service {
             return packageName;
         }
     }
-
-    // ─── Supabase limits refresh ──────────────────────────────────────────────
-
-    private void refreshLimitsCache() {
-        String userId = SessionManager.getInstance().getUserId();
-        if (userId == null) return;
-        SupabaseClient.getInstance().db()
-                .getAppLimits("eq." + userId, "app_name.asc")
-                .enqueue(new Callback<List<AppLimit>>() {
-                    @Override public void onResponse(Call<List<AppLimit>> call,
-                                                     Response<List<AppLimit>> r) {
-                        if (!r.isSuccessful() || r.body() == null) return;
-                        limitsCache.clear();
-                        for (AppLimit limit : r.body()) {
-                            if (limit.isActive() && limit.getDailyLimitMinutes() > 0) {
-                                limitsCache.put(limit.getPackageName(), limit.getDailyLimitMinutes());
-                            }
-                        }
-                    }
-                    @Override public void onFailure(Call<List<AppLimit>> call, Throwable t) {
-                        Log.e(TAG, "refreshLimitsCache error", t);
-                    }
-                });
-    }
-
-    // ─── Foreground notification ──────────────────────────────────────────────
 
     private Notification buildNotification() {
         return new NotificationCompat.Builder(this, ScreenPactApp.CHANNEL_MONITOR)

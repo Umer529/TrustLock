@@ -23,6 +23,15 @@
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
     </style>
 
+    <!-- Splash theme: solid dark background and no animation in/out so the launcher → splash
+         handoff is seamless. The reveal animation is driven entirely in code. -->
+    <style name="Theme.TrustLock.Splash" parent="Base.Theme.TrustLock">
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:statusBarColor">@color/splash_background</item>
+        <item name="android:navigationBarColor">@color/splash_background</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
     <!-- Smooth activity transitions -->
     <style name="WindowAnimation" parent="@android:style/Animation.Activity">
         <item name="android:activityOpenEnterAnimation">@anim/fade_in</item>

@@ -80,7 +80,7 @@ public class BlockedAppActivity extends AppCompatActivity {
             binding.ivBlockedAppIcon.setImageResource(android.R.drawable.sym_def_app_icon);
         }
 
-        long usedMinutes  = UsageStatsHelper.getTodayUsageMinutes(this, pkg);
+        long usedMinutes  = UsageStatsHelper.getEffectiveUsageMinutes(this, pkg);
         int  limitMinutes = blockedAppsManager.getLimitMinutes(pkg);
 
         String message;

@@ -73,6 +73,11 @@ public class PermissionsActivity extends AppCompatActivity {
                         "Lets ScreenPact detect when a time-limited app is opened",
                         android.R.drawable.ic_menu_view),
                 new PermissionItem(
+                        PermissionItem.Type.OVERLAY,
+                        "Display Over Other Apps",
+                        "Allows the block screen to appear over limited apps",
+                        android.R.drawable.ic_menu_view),
+                new PermissionItem(
                         PermissionItem.Type.DEVICE_ADMIN,
                         "Device Admin",
                         "Prevents uninstall without guardian approval",
@@ -93,6 +98,10 @@ public class PermissionsActivity extends AppCompatActivity {
                 break;
             case ACCESSIBILITY:
                 intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                break;
+            case OVERLAY:
+                intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        android.net.Uri.parse("package:" + getPackageName()));
                 break;
             case DEVICE_ADMIN:
                 // Opens Android's built-in "Activate device administrator" dialog
@@ -128,6 +137,8 @@ public class PermissionsActivity extends AppCompatActivity {
                 return hasUsageStatsPermission();
             case ACCESSIBILITY:
                 return isAccessibilityServiceEnabled();
+            case OVERLAY:
+                return Settings.canDrawOverlays(this);
             case DEVICE_ADMIN:
                 return isDeviceAdminActive();
             case NOTIFICATIONS:

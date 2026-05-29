@@ -3,12 +3,14 @@ package com.example.trustlock;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.trustlock.databinding.ActivityMainBinding;
 import com.example.trustlock.service.ScreenTimeMonitorService;
+import com.example.trustlock.ui.permissions.PermissionsActivity;
 import com.example.trustlock.ui.welcome.WelcomeActivity;
 import com.example.trustlock.util.SessionManager;
 import com.example.trustlock.util.UsageStatsHelper;
@@ -27,10 +29,33 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        // If any core permission is missing (Usage, Accessibility, Overlay),
+        // route to the permissions screen so the user can grant it.
+        if (!hasCorePermissions()) {
+            startActivity(new Intent(this, PermissionsActivity.class));
+            finish();
+            return;
+        }
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         setupViewPagerWithNav();
+    }
+
+    private boolean hasCorePermissions() {
+        return UsageStatsHelper.hasUsagePermission(this)
+                && isAccessibilityEnabled()
+                && Settings.canDrawOverlays(this);
+    }
+
+    private boolean isAccessibilityEnabled() {
+        String serviceId = getPackageName()
+                + "/com.example.trustlock.service.AppBlockingAccessibilityService";
+        String enabled = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        return enabled != null && enabled.contains(serviceId);
     }
 
     private void setupViewPagerWithNav() {
