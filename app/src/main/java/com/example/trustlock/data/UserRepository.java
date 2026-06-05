@@ -84,17 +84,29 @@ public class UserRepository {
                 });
     }
 
+    /**
+     * Returns the user's limits list, or {@code null} if the network call failed
+     * (no connection, server error). An empty list means "Supabase returned no
+     * rows" — i.e. the user genuinely has zero limits. The caller MUST treat
+     * null and [] differently so the local SQLite cache is not wiped offline.
+     */
     public void fetchAppLimits(String userId, Callback1<List<AppLimit>> callback) {
         db.getAppLimits("eq." + userId, "app_name.asc")
                 .enqueue(new Callback<List<AppLimit>>() {
                     @Override public void onResponse(Call<List<AppLimit>> call,
                                                      Response<List<AppLimit>> r) {
-                        callback.onResult(r.isSuccessful() && r.body() != null
-                                ? r.body() : new ArrayList<>());
+                        if (r.isSuccessful() && r.body() != null) {
+                            callback.onResult(r.body());
+                        } else {
+                            // HTTP error (auth, 5xx, etc.) — treat as failure
+                            Log.w(TAG, "fetchAppLimits HTTP " + r.code());
+                            callback.onResult(null);
+                        }
                     }
                     @Override public void onFailure(Call<List<AppLimit>> call, Throwable t) {
+                        // Network/IO failure — treat as offline
                         Log.e(TAG, "fetchAppLimits error", t);
-                        callback.onResult(new ArrayList<>());
+                        callback.onResult(null);
                     }
                 });
     }
