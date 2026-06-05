@@ -64,26 +64,31 @@ public class PermissionsActivity extends AppCompatActivity {
         permissionItems = Arrays.asList(
                 new PermissionItem(
                         PermissionItem.Type.USAGE_ACCESS,
+                        "TRACKING",
                         "Usage Access",
                         "Lets ScreenPact see how long you spend in each app",
                         android.R.drawable.ic_menu_recent_history, false),
                 new PermissionItem(
                         PermissionItem.Type.ACCESSIBILITY,
+                        "BLOCKING",
                         "Accessibility Service",
                         "Lets ScreenPact detect when a time-limited app is opened",
                         android.R.drawable.ic_menu_view, false),
                 new PermissionItem(
                         PermissionItem.Type.OVERLAY,
+                        "DISPLAY",
                         "Display Over Other Apps",
                         "Allows the block screen to appear over limited apps",
                         android.R.drawable.ic_menu_view, false),
                 new PermissionItem(
                         PermissionItem.Type.DEVICE_ADMIN,
+                        "PROTECTION",
                         "Device Admin",
                         "Prevents uninstall without guardian approval",
                         android.R.drawable.ic_lock_lock, true),
                 new PermissionItem(
                         PermissionItem.Type.NOTIFICATIONS,
+                        "ALERTS",
                         "Notifications",
                         "Sends alerts when limits are reached or requests need approval",
                         android.R.drawable.ic_dialog_info, false)

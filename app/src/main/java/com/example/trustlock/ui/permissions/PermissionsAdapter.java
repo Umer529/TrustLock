@@ -59,6 +59,7 @@ public class PermissionsAdapter extends RecyclerView.Adapter<PermissionsAdapter.
         }
 
         void bind(PermissionItem item) {
+            binding.tvPermCategory.setText(item.getCategory());
             binding.tvPermName.setText(item.getName());
             binding.tvPermDesc.setText(item.getDescription());
             binding.ivPermIcon.setImageResource(item.getIconRes());

@@ -11,15 +11,17 @@ public class PermissionItem {
     }
 
     private final Type    type;
+    private final String  category;     // Short upper-case tag e.g. "PRIVACY"
     private final String  name;
     private final String  description;
     private final int     iconRes;
     private final boolean optional;
     private       boolean granted;
 
-    public PermissionItem(Type type, String name, String description, int iconRes,
-                          boolean optional) {
+    public PermissionItem(Type type, String category, String name, String description,
+                          int iconRes, boolean optional) {
         this.type        = type;
+        this.category    = category;
         this.name        = name;
         this.description = description;
         this.iconRes     = iconRes;
@@ -27,12 +29,8 @@ public class PermissionItem {
         this.granted     = false;
     }
 
-    // Back-compat overload defaulting to required.
-    public PermissionItem(Type type, String name, String description, int iconRes) {
-        this(type, name, description, iconRes, false);
-    }
-
     public Type    getType()        { return type; }
+    public String  getCategory()    { return category; }
     public String  getName()        { return name; }
     public String  getDescription() { return description; }
     public int     getIconRes()     { return iconRes; }

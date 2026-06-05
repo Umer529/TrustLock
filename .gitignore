@@ -21,6 +21,9 @@ local.properties
 # Release signing — keystore + password must never be committed
 keys/
 
+# Firebase config (contains client API key; should not be in version control)
+app/google-services.json
+
 # Build / debugging output — never commit
 *_output.txt
 build_output.txt

@@ -52,6 +52,7 @@ public class ScreenTimeMonitorService extends Service {
     private Runnable           monitorRunnable;
     private BlockedAppsManager blockedAppsManager;
     private com.example.trustlock.util.DailyStatsManager statsManager;
+    private com.example.trustlock.data.LocalRepository    localRepo;
 
     private final Map<String, Integer> limitsCache = new HashMap<>();
     private int tickCount = 0;
@@ -61,6 +62,7 @@ public class ScreenTimeMonitorService extends Service {
         super.onCreate();
         blockedAppsManager = new BlockedAppsManager(this);
         statsManager = new com.example.trustlock.util.DailyStatsManager(this);
+        localRepo = new com.example.trustlock.data.LocalRepository(this);
         handler = new Handler(Looper.getMainLooper());
         monitorRunnable = new Runnable() {
             @Override public void run() {
@@ -73,16 +75,85 @@ public class ScreenTimeMonitorService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(NOTIFICATION_ID, buildNotification());
+        checkServiceGapAndAlert();
         refreshLimitsCacheThenStart();
         return START_STICKY;
     }
 
+    /**
+     * Detects whether the monitor service was killed/frozen/force-stopped for
+     * an abnormally long period. The previous tick stamps a heartbeat into
+     * SharedPreferences; on every fresh start we compare it to the current
+     * clock. A gap larger than {@link #SERVICE_DOWN_THRESHOLD_MS} triggers an
+     * alert email to the guardian.
+     *
+     * We can't *prevent* a user from force-stopping or freezing the app —
+     * Android intentionally gives the user final control — but we can report it.
+     */
+    private static final String PREFS_HEARTBEAT = "screenpact_heartbeat";
+    private static final String KEY_LAST_TICK   = "last_tick_ms";
+    /** ~5x the normal tick interval. Anything beyond this is a real outage. */
+    private static final long   SERVICE_DOWN_THRESHOLD_MS = 5 * 60_000L;
+
+    private void checkServiceGapAndAlert() {
+        android.content.SharedPreferences prefs = getSharedPreferences(
+                PREFS_HEARTBEAT, MODE_PRIVATE);
+        long lastTick = prefs.getLong(KEY_LAST_TICK, 0L);
+        long now = System.currentTimeMillis();
+        if (lastTick == 0L) return; // First-ever start; nothing to compare to.
+
+        long gap = now - lastTick;
+        if (gap < SERVICE_DOWN_THRESHOLD_MS) return;
+
+        String guardianEmail = SessionManager.getInstance().getGuardianEmail();
+        long minutes = gap / 60_000L;
+        String description = "ScreenPact stopped tracking on your ward's device for about "
+                + minutes + " minute" + (minutes == 1 ? "" : "s")
+                + ". The app may have been force-stopped or frozen — screen-time "
+                + "controls were not active during that time. Please ask your ward "
+                + "to reopen ScreenPact.";
+        new com.example.trustlock.util.ApprovalRequestManager()
+                .sendGuardianAlert(guardianEmail, description);
+        Log.w(TAG, "Service was down for " + minutes + " min — guardian notified");
+    }
+
     private void refreshLimitsCacheThenStart() {
-        String userId = SessionManager.getInstance().getUserId();
+        final String userId = SessionManager.getInstance().getUserId();
         if (userId == null) {
             handler.postDelayed(monitorRunnable, INTERVAL_MS);
             return;
         }
+
+        // Step 1: Seed limitsCache from local SQLite immediately. This guarantees
+        // enforcement keeps working even with no network — the entire reason for
+        // this method existing.
+        localRepo.getLimits(userId, cached -> {
+            if (cached != null && !cached.isEmpty()) {
+                limitsCache.clear();
+                for (com.example.trustlock.data.local.AppLimitEntity e : cached) {
+                    if (e.active && e.dailyLimitMinutes > 0) {
+                        limitsCache.put(e.packageName, e.dailyLimitMinutes);
+                    }
+                }
+                ensureBaselinesForCache();
+                Log.d(TAG, "Limits loaded from local cache: " + limitsCache.size());
+                // Start enforcing right away off the local data
+                handler.post(monitorRunnable);
+            }
+
+            // Step 2: Refresh from Supabase in the background. Updates the cache
+            // and SQLite if reachable; otherwise we keep using the local copy.
+            refreshFromNetwork(userId, cached == null || cached.isEmpty());
+        });
+    }
+
+    /**
+     * Pulls limits from Supabase and updates both the in-memory cache and
+     * SQLite. If {@code startMonitorOnResponse} is true we also post the
+     * monitor runnable (used by the very-first-install case where the local
+     * cache was empty so we hadn't started enforcement yet).
+     */
+    private void refreshFromNetwork(String userId, boolean startMonitorOnResponse) {
         SupabaseClient.getInstance().db()
                 .getAppLimits("eq." + userId, "app_name.asc")
                 .enqueue(new Callback<List<AppLimit>>() {
@@ -90,20 +161,34 @@ public class ScreenTimeMonitorService extends Service {
                                                      Response<List<AppLimit>> r) {
                         if (r.isSuccessful() && r.body() != null) {
                             limitsCache.clear();
+                            java.util.List<com.example.trustlock.data.local.AppLimitEntity> toCache
+                                    = new java.util.ArrayList<>();
                             for (AppLimit limit : r.body()) {
                                 if (limit.isActive() && limit.getDailyLimitMinutes() > 0) {
                                     limitsCache.put(limit.getPackageName(),
                                             limit.getDailyLimitMinutes());
                                 }
+                                // Mirror every row into SQLite so we can read it offline next time
+                                com.example.trustlock.data.local.AppLimitEntity e
+                                        = new com.example.trustlock.data.local.AppLimitEntity();
+                                e.userId            = userId;
+                                e.packageName       = limit.getPackageName();
+                                e.appName           = limit.getAppName();
+                                e.dailyLimitMinutes = limit.getDailyLimitMinutes();
+                                e.active            = limit.isActive();
+                                toCache.add(e);
                             }
+                            if (!toCache.isEmpty()) localRepo.saveLimits(toCache);
                             ensureBaselinesForCache();
-                            Log.d(TAG, "Initial limits loaded: " + limitsCache.size());
+                            blockedAppsManager.unblockAppsNotIn(limitsCache.keySet());
+                            Log.d(TAG, "Limits refreshed from network: " + limitsCache.size());
                         }
-                        handler.post(monitorRunnable);
+                        if (startMonitorOnResponse) handler.post(monitorRunnable);
                     }
                     @Override public void onFailure(Call<List<AppLimit>> call, Throwable t) {
-                        Log.e(TAG, "Initial limits load failed", t);
-                        handler.postDelayed(monitorRunnable, INTERVAL_MS);
+                        // Offline: keep using whatever's in limitsCache already.
+                        Log.w(TAG, "Network limits refresh failed; using local cache", t);
+                        if (startMonitorOnResponse) handler.postDelayed(monitorRunnable, INTERVAL_MS);
                     }
                 });
     }
@@ -143,6 +228,12 @@ public class ScreenTimeMonitorService extends Service {
         checkUsageAndEnforce();
         checkPendingApproval();
         com.example.trustlock.util.PermissionMonitor.checkAndNotify(this);
+        // Stamp the heartbeat. If the service is force-stopped, the gap between
+        // this stamp and the next service start will reveal it.
+        getSharedPreferences(PREFS_HEARTBEAT, MODE_PRIVATE)
+                .edit()
+                .putLong(KEY_LAST_TICK, System.currentTimeMillis())
+                .apply();
     }
 
     private void checkUsageAndEnforce() {
@@ -373,28 +464,9 @@ public class ScreenTimeMonitorService extends Service {
     private void refreshLimitsCache() {
         String userId = SessionManager.getInstance().getUserId();
         if (userId == null) return;
-        SupabaseClient.getInstance().db()
-                .getAppLimits("eq." + userId, "app_name.asc")
-                .enqueue(new Callback<List<AppLimit>>() {
-                    @Override public void onResponse(Call<List<AppLimit>> call,
-                                                     Response<List<AppLimit>> r) {
-                        if (!r.isSuccessful() || r.body() == null) return;
-                        limitsCache.clear();
-                        for (AppLimit limit : r.body()) {
-                            if (limit.isActive() && limit.getDailyLimitMinutes() > 0) {
-                                limitsCache.put(limit.getPackageName(),
-                                        limit.getDailyLimitMinutes());
-                            }
-                        }
-                        ensureBaselinesForCache();
-                        // Unblock any app that had a limit which was just removed
-                        blockedAppsManager.unblockAppsNotIn(limitsCache.keySet());
-                        Log.d(TAG, "Limits refreshed: " + limitsCache.size());
-                    }
-                    @Override public void onFailure(Call<List<AppLimit>> call, Throwable t) {
-                        Log.e(TAG, "refreshLimitsCache error", t);
-                    }
-                });
+        // Reuse the offline-safe path; "false" means don't restart the monitor,
+        // it's already running.
+        refreshFromNetwork(userId, false);
     }
 
     // ─── Notifications ────────────────────────────────────────────────────────
