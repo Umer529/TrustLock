@@ -385,7 +385,7 @@ public class ScreenTimeMonitorService extends Service {
             }
             showApprovalNotification(
                     approved ? "Uninstall approved" : "Uninstall denied",
-                    approved ? "Tap to remove ScreenPact"
+                    approved ? "You can now uninstall the app safely. Tap to start."
                              : "Your guardian rejected the request.",
                     buildMainIntent());
 

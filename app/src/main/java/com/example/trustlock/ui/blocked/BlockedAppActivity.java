@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.trustlock.databinding.ActivityBlockedBinding;
 import com.example.trustlock.models.ApprovalRequest;
-import com.example.trustlock.ui.approval.WaitingForApprovalDialog;
 import com.example.trustlock.util.ApprovalRequestManager;
 import com.example.trustlock.util.BlockedAppsManager;
 import com.example.trustlock.util.SessionManager;
@@ -24,7 +23,6 @@ public class BlockedAppActivity extends AppCompatActivity {
 
     public static final String EXTRA_PACKAGE_NAME = "packageName";
     private static final int   EXTRA_TIME_MINUTES = 30;
-    private static final String TAG_DIALOG         = "extra_time_approval";
 
     private ActivityBlockedBinding binding;
     private BlockedAppsManager     blockedAppsManager;
@@ -49,7 +47,7 @@ public class BlockedAppActivity extends AppCompatActivity {
         populateUi(packageName);
 
         binding.btnGoBack.setOnClickListener(v -> goToHomeLauncher());
-        binding.btnRequestTime.setOnClickListener(v -> requestExtraTime());
+        binding.btnRequestTime.setOnClickListener(v -> confirmAndRequestExtraTime());
     }
 
     @Override
@@ -93,6 +91,17 @@ public class BlockedAppActivity extends AppCompatActivity {
         binding.tvBlockedMessage.setText(message);
     }
 
+    private void confirmAndRequestExtraTime() {
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("Ask for " + EXTRA_TIME_MINUTES + " more minutes?")
+                .setMessage("Your guardian will be emailed a request to grant "
+                        + EXTRA_TIME_MINUTES + " more minutes of " + appName + ". "
+                        + "Once sent, the email cannot be recalled.")
+                .setNegativeButton("Not now", null)
+                .setPositiveButton("Send request", (d, w) -> requestExtraTime())
+                .show();
+    }
+
     private void requestExtraTime() {
         SessionManager session = SessionManager.getInstance();
         String userId        = session.getUserId();
@@ -125,39 +134,20 @@ public class BlockedAppActivity extends AppCompatActivity {
                     binding.btnRequestTime.setText("Request Extra Time");
 
                     if (requestId == null) {
-                        Toast.makeText(this, "Failed to send request. Try again.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Failed to send request. Try again.",
+                                Toast.LENGTH_LONG).show();
                         return;
                     }
 
-                    // Persist so the background service keeps polling if user dismisses the dialog
-                    SessionManager.getInstance()
-                            .setPendingRequest(requestId, ApprovalRequest.TYPE_EXTRA_TIME, packageName);
-
-                    WaitingForApprovalDialog dialog = WaitingForApprovalDialog.newInstance(
-                            requestId, guardianEmail, description);
-                    dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
-                        @Override
-                        public void onApproved() {
-                            SessionManager.getInstance().clearPendingRequest();
-                            blockedAppsManager.unblockApp(packageName);
-                            blockedAppsManager.setGracePeriod(packageName, EXTRA_TIME_MINUTES);
-                            Toast.makeText(BlockedAppActivity.this,
-                                    "Approved! You have " + EXTRA_TIME_MINUTES + " extra minutes.",
-                                    Toast.LENGTH_LONG).show();
-                            goToHomeLauncher();
-                        }
-
-                        @Override
-                        public void onDenied() {
-                            SessionManager.getInstance().clearPendingRequest();
-                            Toast.makeText(BlockedAppActivity.this,
-                                    "Guardian denied extra time.", Toast.LENGTH_LONG).show();
-                        }
-                    });
-
-                    if (!isFinishing() && !isDestroyed()) {
-                        dialog.show(getSupportFragmentManager(), TAG_DIALOG);
-                    }
+                    // Persist so the background service keeps polling for the
+                    // guardian's decision; it surfaces approval/denial via
+                    // system notification + applies the grace period when granted.
+                    SessionManager.getInstance().setPendingRequest(
+                            requestId, ApprovalRequest.TYPE_EXTRA_TIME, packageName);
+                    Toast.makeText(BlockedAppActivity.this,
+                            "Request sent. We'll notify you when your guardian responds.",
+                            Toast.LENGTH_LONG).show();
+                    goToHomeLauncher();
                 }));
     }
 

@@ -129,12 +129,24 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     /**
-     * Core = Usage Access + Accessibility + Overlay. All three are needed for
-     * blocking to work reliably; if any is missing, route the user through
-     * PermissionsActivity to grant it.
+     * Core = Usage Access + Accessibility + Overlay + Device Admin. All four
+     * are needed for blocking + uninstall-protection to work; if any is
+     * missing, route the user through PermissionsActivity to grant it.
      */
     private boolean hasCorePermissions() {
-        return hasUsageAccess() && isAccessibilityEnabled() && Settings.canDrawOverlays(this);
+        return hasUsageAccess()
+                && isAccessibilityEnabled()
+                && Settings.canDrawOverlays(this)
+                && isDeviceAdminActive();
+    }
+
+    private boolean isDeviceAdminActive() {
+        android.app.admin.DevicePolicyManager dpm =
+                (android.app.admin.DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
+        android.content.ComponentName admin = new android.content.ComponentName(
+                this,
+                com.example.trustlock.receiver.ScreenPactDeviceAdminReceiver.class);
+        return dpm != null && dpm.isAdminActive(admin);
     }
 
     private boolean hasUsageAccess() {

@@ -85,7 +85,7 @@ public class PermissionsActivity extends AppCompatActivity {
                         "PROTECTION",
                         "Device Admin",
                         "Prevents uninstall without guardian approval",
-                        android.R.drawable.ic_lock_lock, true),
+                        android.R.drawable.ic_lock_lock, false),
                 new PermissionItem(
                         PermissionItem.Type.NOTIFICATIONS,
                         "ALERTS",

@@ -51,7 +51,15 @@ public class MainActivity extends AppCompatActivity {
     private boolean hasCorePermissions() {
         return UsageStatsHelper.hasUsagePermission(this)
                 && isAccessibilityEnabled()
-                && Settings.canDrawOverlays(this);
+                && Settings.canDrawOverlays(this)
+                && isDeviceAdminActive();
+    }
+
+    private boolean isDeviceAdminActive() {
+        DevicePolicyManager dpm =
+                (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName admin = new ComponentName(this, ScreenPactDeviceAdminReceiver.class);
+        return dpm != null && dpm.isAdminActive(admin);
     }
 
     private boolean isAccessibilityEnabled() {

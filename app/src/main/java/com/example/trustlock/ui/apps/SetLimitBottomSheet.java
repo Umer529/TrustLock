@@ -74,10 +74,15 @@ public class SetLimitBottomSheet extends BottomSheetDialogFragment {
 
         if (currentMinutes > 0) {
             binding.btnRemoveLimit.setVisibility(View.VISIBLE);
-            binding.btnRemoveLimit.setOnClickListener(v -> {
-                viewModel.requestRemoveLimit(packageName, appName);
-                dismiss();
-            });
+            binding.btnRemoveLimit.setOnClickListener(v ->
+                    confirmGuardianRequest(
+                            "Ask guardian to remove limit?",
+                            "Your guardian will be emailed a request to remove the limit on "
+                                    + appName + ". Once sent, the email cannot be recalled.",
+                            () -> {
+                                viewModel.requestRemoveLimit(packageName, appName);
+                                dismiss();
+                            }));
         }
 
         binding.btnSetLimit.setOnClickListener(v -> {
@@ -86,9 +91,43 @@ public class SetLimitBottomSheet extends BottomSheetDialogFragment {
                 binding.btnSetLimit.setError("Set a limit greater than 0");
                 return;
             }
-            viewModel.requestLimitChange(new AppLimit(packageName, appName, totalMinutes, true));
-            dismiss();
+            // New limits don't require guardian approval; changes to an
+            // existing one do — confirm before sending in that case.
+            if (currentMinutes > 0) {
+                confirmGuardianRequest(
+                        "Ask guardian to change limit?",
+                        "Your guardian will be emailed a request to change the limit on "
+                                + appName + " to " + formatLimit(totalMinutes)
+                                + ". Once sent, the email cannot be recalled.",
+                        () -> {
+                            viewModel.requestLimitChange(
+                                    new AppLimit(packageName, appName, totalMinutes, true));
+                            dismiss();
+                        });
+            } else {
+                viewModel.requestLimitChange(
+                        new AppLimit(packageName, appName, totalMinutes, true));
+                dismiss();
+            }
         });
+    }
+
+    private void confirmGuardianRequest(String title, String message, Runnable onConfirm) {
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setNegativeButton("Not now", null)
+                .setPositiveButton("Send request", (d, w) -> onConfirm.run())
+                .show();
+    }
+
+    private static String formatLimit(int minutes) {
+        if (minutes >= 60) {
+            int h = minutes / 60;
+            int m = minutes % 60;
+            return (m == 0 ? h + "h" : h + "h " + m + "m");
+        }
+        return minutes + "m";
     }
 
     private void applyPickerTextColor(NumberPicker picker, int color) {

@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.trustlock.databinding.FragmentAppsBinding;
 import com.example.trustlock.models.AppInfo;
 import com.example.trustlock.models.AppLimit;
-import com.example.trustlock.ui.approval.WaitingForApprovalDialog;
 import com.example.trustlock.viewmodel.AppLimitViewModel;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -73,17 +72,12 @@ public class AppsFragment extends Fragment {
         viewModel.getPendingApproval().observe(getViewLifecycleOwner(), data -> {
             if (data == null) return;
             viewModel.clearPendingApproval();
-
-            WaitingForApprovalDialog dialog = WaitingForApprovalDialog.newInstance(
-                    data.requestId, data.guardianEmail, data.description);
-            dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
-                @Override public void onApproved()  { viewModel.executePendingAction(); }
-                @Override public void onDenied() {
-                    Snackbar.make(requireView(), "Request denied by guardian",
-                            Snackbar.LENGTH_LONG).show();
-                }
-            });
-            dialog.show(getChildFragmentManager(), "waiting_approval");
+            // Email is on its way — no point in a waiting dialog with a cancel
+            // button since the email cannot be unsent. The background service
+            // polls and surfaces the guardian's decision via system notification.
+            Snackbar.make(requireView(),
+                    "Request sent. We'll notify you when your guardian responds.",
+                    Snackbar.LENGTH_LONG).show();
         });
 
         viewModel.getError().observe(getViewLifecycleOwner(), msg -> {

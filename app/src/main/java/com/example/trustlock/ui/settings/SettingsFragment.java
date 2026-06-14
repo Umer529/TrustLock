@@ -17,16 +17,24 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.trustlock.databinding.FragmentSettingsBinding;
 import com.example.trustlock.receiver.ScreenPactDeviceAdminReceiver;
-import com.example.trustlock.ui.approval.WaitingForApprovalDialog;
 import com.example.trustlock.util.SessionManager;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
 public class SettingsFragment extends Fragment {
 
-    private static final String TAG_DIALOG = "uninstall_approval";
-
     private FragmentSettingsBinding binding;
     private SettingsViewModel       viewModel;
+
+    private void confirmAndRequestUninstall() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Send uninstall request?")
+                .setMessage("Your guardian will be emailed a request to approve removing "
+                        + "ScreenPact. Once sent, the email cannot be recalled.")
+                .setNegativeButton("Not now", null)
+                .setPositiveButton("Send request", (d, w) -> viewModel.requestUninstall())
+                .show();
+    }
 
     @Nullable
     @Override
@@ -57,35 +65,18 @@ public class SettingsFragment extends Fragment {
         viewModel.loadProfile();
 
         binding.btnActivateAdmin.setOnClickListener(v -> launchAdminActivation());
-        binding.btnRequestUninstall.setOnClickListener(v -> viewModel.requestUninstall());
+        binding.btnRequestUninstall.setOnClickListener(v -> confirmAndRequestUninstall());
 
+        // After viewModel.requestUninstall() succeeds, it posts to pendingApproval.
+        // We don't show a waiting dialog (can't unsend an email) — just confirm
+        // submission with a Snackbar. The background service polls for the
+        // guardian's decision and surfaces it as a system notification.
         viewModel.getPendingApproval().observe(getViewLifecycleOwner(), data -> {
             if (data == null) return;
             viewModel.clearPendingApproval();
-
-            WaitingForApprovalDialog dialog = WaitingForApprovalDialog.newInstance(
-                    data.requestId,
-                    data.guardianEmail,
-                    data.description);
-
-            dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
-                @Override public void onApproved() {
-                    com.example.trustlock.util.SessionManager session =
-                            com.example.trustlock.util.SessionManager.getInstance();
-                    session.clearPendingRequest();
-                    // Clear the deferred flag too — the dialog is handling the
-                    // uninstall now, so MainActivity shouldn't re-prompt on next
-                    // open even if the background poll raced and set it.
-                    session.setUninstallApproved(false);
-                    deactivateAdminAndUninstall();
-                }
-                @Override public void onDenied() {
-                    com.example.trustlock.util.SessionManager.getInstance().clearPendingRequest();
-                    Snackbar.make(requireView(),
-                            "Guardian denied the uninstall request", Snackbar.LENGTH_LONG).show();
-                }
-            });
-            dialog.show(getChildFragmentManager(), TAG_DIALOG);
+            Snackbar.make(requireView(),
+                    "Request sent. We'll notify you when your guardian responds.",
+                    Snackbar.LENGTH_LONG).show();
         });
 
         viewModel.getError().observe(getViewLifecycleOwner(), msg -> {

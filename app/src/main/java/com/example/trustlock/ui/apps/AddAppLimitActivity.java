@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.trustlock.databinding.ActivityAddAppLimitBinding;
 import com.example.trustlock.models.AppInfo;
 import com.example.trustlock.models.AppLimit;
-import com.example.trustlock.ui.approval.WaitingForApprovalDialog;
 import com.example.trustlock.viewmodel.AppLimitViewModel;
 
 import java.util.HashSet;
@@ -96,24 +95,15 @@ public class AddAppLimitActivity extends AppCompatActivity {
         viewModel.getPendingApproval().observe(this, data -> {
             if (data == null) return;
             viewModel.clearPendingApproval();
-
-            WaitingForApprovalDialog dialog = WaitingForApprovalDialog.newInstance(
-                    data.requestId, data.guardianEmail, data.description);
-            dialog.setOnApprovalResultListener(new WaitingForApprovalDialog.OnApprovalResultListener() {
-                @Override
-                public void onApproved() {
-                    viewModel.executePendingAction();
-                    showSuccessAndFinish();
-                }
-                @Override
-                public void onDenied() {
-                    com.google.android.material.snackbar.Snackbar
-                            .make(binding.getRoot(), "Request denied by guardian",
-                                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
-                            .show();
-                }
-            });
-            dialog.show(getSupportFragmentManager(), "waiting_approval");
+            // Confirmation happened in the bottom sheet before the request was
+            // sent. Acknowledge submission and close — the background service
+            // surfaces the guardian's response as a system notification.
+            com.google.android.material.snackbar.Snackbar
+                    .make(binding.getRoot(),
+                            "Request sent. We'll notify you when your guardian responds.",
+                            com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                    .show();
+            binding.getRoot().postDelayed(this::finish, 1200);
         });
 
         viewModel.getError().observe(this, errorMsg -> {
