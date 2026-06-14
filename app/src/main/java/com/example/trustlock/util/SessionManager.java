@@ -36,7 +36,16 @@ public class SessionManager {
     public String getGuardianEmail() { return prefs.getString(KEY_GUARDIAN, null); }
 
     public void setUserId(String id)           { prefs.edit().putString(KEY_USER_ID, id).apply(); }
-    public void setAccessToken(String token)    { prefs.edit().putString(KEY_TOKEN, token).apply(); }
+    public void setAccessToken(String token)    {
+        prefs.edit().putString(KEY_TOKEN, token).apply();
+        // Mirror into the Realtime client so subscriptions pick up the new JWT
+        // (RLS policies depend on auth.uid() resolving from this token).
+        try {
+            com.example.trustlock.data.RealtimeManager.getInstance().setAccessToken(token);
+        } catch (IllegalStateException ignored) {
+            // RealtimeManager not initialised yet (very early boot) — fine.
+        }
+    }
     public void setGuardianEmail(String email)  { prefs.edit().putString(KEY_GUARDIAN, email).apply(); }
 
     public String getRefreshToken()          { return prefs.getString(KEY_REFRESH_TOKEN, null); }
