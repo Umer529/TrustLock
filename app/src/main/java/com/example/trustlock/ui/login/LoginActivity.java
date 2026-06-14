@@ -10,12 +10,15 @@ import android.provider.Settings;
 
 import com.example.trustlock.MainActivity;
 import com.example.trustlock.data.LocalRepository;
+import com.example.trustlock.models.Role;
+import com.example.trustlock.ui.onboarding.RoleSelectionActivity;
 import com.example.trustlock.ui.permissions.PermissionsActivity;
 import com.example.trustlock.data.SupabaseAuthApi;
 import com.example.trustlock.data.SupabaseClient;
 import com.example.trustlock.data.UserRepository;
 import com.example.trustlock.data.local.UserProfileEntity;
 import com.example.trustlock.databinding.ActivityLoginBinding;
+import com.example.trustlock.util.RoleManager;
 import com.example.trustlock.util.SessionManager;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -82,11 +85,15 @@ public class LoginActivity extends AppCompatActivity {
                         session.setUserEmail(email);
                         session.setPassword(password);
 
-                        // Fetch full profile to restore name + guardian email
+                        // Fetch full profile to restore name + guardian email + role.
                         new UserRepository().fetchUser(uid, user -> {
                             if (user != null) {
                                 session.setUserName(user.getName());
                                 session.setGuardianEmail(user.getGuardianEmail());
+                                // Cache the server's role so cold-start MainActivity
+                                // can pick the correct nav graph instantly.
+                                Role r = Role.fromString(user.getRole());
+                                if (r != null) RoleManager.getInstance().setRole(r);
 
                                 UserProfileEntity profile = new UserProfileEntity();
                                 profile.id            = uid;
@@ -96,11 +103,18 @@ public class LoginActivity extends AppCompatActivity {
                                 new LocalRepository(LoginActivity.this).saveProfile(profile);
                             }
                             runOnUiThread(() -> {
-                                // Go to PermissionsActivity if core permissions are missing;
-                                // otherwise skip straight to the main app.
-                                Class<?> dest = hasCorePermissions()
-                                        ? MainActivity.class
-                                        : PermissionsActivity.class;
+                                // Routing order:
+                                //   1. No role yet     -> RoleSelectionActivity
+                                //   2. Permissions gap -> PermissionsActivity
+                                //   3. Everything set  -> MainActivity
+                                Class<?> dest;
+                                if (!RoleManager.getInstance().hasRole()) {
+                                    dest = RoleSelectionActivity.class;
+                                } else if (!hasCorePermissions()) {
+                                    dest = PermissionsActivity.class;
+                                } else {
+                                    dest = MainActivity.class;
+                                }
                                 startActivity(new Intent(LoginActivity.this, dest));
                                 finishAffinity();
                             });

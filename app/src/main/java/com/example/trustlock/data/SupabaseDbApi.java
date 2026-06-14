@@ -24,7 +24,13 @@ public interface SupabaseDbApi {
     Call<Void> insertUser(@Header("Prefer") String prefer, @Body User user);
 
     @GET("rest/v1/users")
-    Call<List<User>> getUser(@Query("id") String idEq);
+    Call<List<User>> getUser(@Query("uid") String uidEq);
+
+    /** PATCH a user's row. Use new schema column names: {@code uid=eq.<uuid>}. */
+    @PATCH("rest/v1/users")
+    Call<Void> patchUser(@Header("Prefer") String prefer,
+                         @Query("uid") String uidEq,
+                         @Body Map<String, Object> updates);
 
     // ── App Limits ─────────────────────────────────────────────────────────────
 

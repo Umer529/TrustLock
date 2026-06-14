@@ -94,6 +94,9 @@ dependencies {
     implementation(libs.room.runtime)
     annotationProcessor(libs.room.compiler)
 
+    // EncryptedSharedPreferences (role + sensitive cache)
+    implementation(libs.security.crypto)
+
     // Glide
     implementation(libs.glide)
     annotationProcessor(libs.glide.compiler)

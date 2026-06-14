@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 public class User {
 
-    @SerializedName("id")
+    @SerializedName("uid")
     private String uid;
 
     @SerializedName("name")
@@ -13,11 +13,21 @@ public class User {
     @SerializedName("email")
     private String email;
 
+    /** Deprecated: replaced by the uid-based guardian link in v2. Kept for back-compat. */
     @SerializedName("guardian_email")
     private String guardianEmail;
 
     @SerializedName("fcm_token")
     private String fcmToken;
+
+    @SerializedName("role")
+    private String role;
+
+    @SerializedName("phone")
+    private String phone;
+
+    @SerializedName("pairing_code")
+    private String pairingCode;
 
     public User() {}
 
@@ -43,4 +53,13 @@ public class User {
 
     public String getFcmToken()          { return fcmToken; }
     public void   setFcmToken(String v)  { fcmToken = v; }
+
+    public String getRole()          { return role; }
+    public void   setRole(String v)  { role = v; }
+
+    public String getPhone()          { return phone; }
+    public void   setPhone(String v)  { phone = v; }
+
+    public String getPairingCode()          { return pairingCode; }
+    public void   setPairingCode(String v)  { pairingCode = v; }
 }

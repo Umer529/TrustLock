@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.trustlock.R;
 import com.example.trustlock.databinding.ActivityRegistrationBinding;
-import com.example.trustlock.ui.permissions.PermissionsActivity;
+import com.example.trustlock.ui.onboarding.RoleSelectionActivity;
 import com.example.trustlock.viewmodel.RegistrationViewModel;
 
 public class RegistrationActivity extends AppCompatActivity {
@@ -37,7 +37,8 @@ public class RegistrationActivity extends AppCompatActivity {
         viewModel.getRegistrationState().observe(this, state -> {
             switch (state) {
                 case SUCCESS:
-                    startActivity(new Intent(this, PermissionsActivity.class));
+                    // Fresh sign-up always needs to pick a role first.
+                    startActivity(new Intent(this, RoleSelectionActivity.class));
                     finish();
                     break;
                 case LOADING:

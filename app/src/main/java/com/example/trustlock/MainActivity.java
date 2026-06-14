@@ -15,8 +15,10 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.example.trustlock.databinding.ActivityMainBinding;
 import com.example.trustlock.receiver.ScreenPactDeviceAdminReceiver;
 import com.example.trustlock.service.ScreenTimeMonitorService;
+import com.example.trustlock.ui.onboarding.RoleSelectionActivity;
 import com.example.trustlock.ui.permissions.PermissionsActivity;
 import com.example.trustlock.ui.welcome.WelcomeActivity;
+import com.example.trustlock.util.RoleManager;
 import com.example.trustlock.util.SessionManager;
 import com.example.trustlock.util.UsageStatsHelper;
 
@@ -34,8 +36,16 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // If any core permission is missing (Usage, Accessibility, Overlay),
-        // route to the permissions screen so the user can grant it.
+        // Role must be chosen before anything else — it determines which nav
+        // graph this activity will load (USER vs GUARDIAN, wired up in Step 5).
+        if (!RoleManager.getInstance().hasRole()) {
+            startActivity(new Intent(this, RoleSelectionActivity.class));
+            finish();
+            return;
+        }
+
+        // If any core permission is missing (Usage, Accessibility, Overlay,
+        // Device Admin), route to the permissions screen so the user can grant it.
         if (!hasCorePermissions()) {
             startActivity(new Intent(this, PermissionsActivity.class));
             finish();
