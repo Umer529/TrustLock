@@ -103,14 +103,21 @@ public class LoginActivity extends AppCompatActivity {
                                 new LocalRepository(LoginActivity.this).saveProfile(profile);
                             }
                             runOnUiThread(() -> {
-                                // Routing order:
-                                //   1. No role yet     -> RoleSelectionActivity
-                                //   2. Permissions gap -> PermissionsActivity
-                                //   3. Everything set  -> MainActivity
+                                // Routing order on returning login:
+                                //   1. No role cached    -> RoleSelectionActivity
+                                //                          (which will forward to the right
+                                //                          pairing screen on selection)
+                                //   2. Permissions gap   -> PermissionsActivity
+                                //                          (USER side only; guardians
+                                //                          fall through to MainActivity
+                                //                          which will show their empty
+                                //                          state if no users are linked)
+                                //   3. Everything set    -> MainActivity
+                                Role r = RoleManager.getInstance().getRole();
                                 Class<?> dest;
-                                if (!RoleManager.getInstance().hasRole()) {
+                                if (r == null) {
                                     dest = RoleSelectionActivity.class;
-                                } else if (!hasCorePermissions()) {
+                                } else if (r == Role.USER && !hasCorePermissions()) {
                                     dest = PermissionsActivity.class;
                                 } else {
                                     dest = MainActivity.class;

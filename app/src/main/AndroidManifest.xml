@@ -77,6 +77,15 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.onboarding.UserPairingActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.onboarding.GuardianPairActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".ui.apps.AddAppLimitActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

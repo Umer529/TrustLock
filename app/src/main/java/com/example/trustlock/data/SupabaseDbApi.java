@@ -2,6 +2,7 @@ package com.example.trustlock.data;
 
 import com.example.trustlock.models.AppLimit;
 import com.example.trustlock.models.ApprovalRequest;
+import com.example.trustlock.models.GuardianLink;
 import com.example.trustlock.models.User;
 
 import java.util.List;
@@ -31,6 +32,19 @@ public interface SupabaseDbApi {
     Call<Void> patchUser(@Header("Prefer") String prefer,
                          @Query("uid") String uidEq,
                          @Body Map<String, Object> updates);
+
+    /** Lookup a user by their published pairing code (guardian side). */
+    @GET("rest/v1/users")
+    Call<List<User>> getUserByPairingCode(@Query("pairing_code") String pairingCodeEq);
+
+    // ── Guardian Links ─────────────────────────────────────────────────────────
+
+    @POST("rest/v1/guardian_links")
+    Call<List<GuardianLink>> insertGuardianLink(@Header("Prefer") String prefer,
+                                                @Body GuardianLink link);
+
+    @GET("rest/v1/guardian_links")
+    Call<List<GuardianLink>> getGuardianLinks(@Query("guardian_uid") String guardianUidEq);
 
     // ── App Limits ─────────────────────────────────────────────────────────────
 

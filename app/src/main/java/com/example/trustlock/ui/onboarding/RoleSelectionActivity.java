@@ -8,11 +8,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.trustlock.MainActivity;
 import com.example.trustlock.data.SupabaseClient;
 import com.example.trustlock.databinding.ActivityRoleSelectionBinding;
 import com.example.trustlock.models.Role;
-import com.example.trustlock.ui.permissions.PermissionsActivity;
 import com.example.trustlock.util.RoleManager;
 import com.example.trustlock.util.SessionManager;
 
@@ -80,12 +78,17 @@ public class RoleSelectionActivity extends AppCompatActivity {
     }
 
     private void finishToNextStep() {
-        // USER side needs Usage Access + Accessibility + Overlay + Device Admin.
-        // GUARDIAN side will only need Notifications (PermissionsActivity reads the
-        // role and shows the right subset — rebuilt in Step 5).
-        // PermissionsActivity's Continue button then forwards to MainActivity, and
-        // MainActivity itself re-runs hasCorePermissions and bounces back if not.
-        startActivity(new Intent(this, PermissionsActivity.class));
+        // Each role goes to a different "pair-up first" screen before anything else:
+        //   USER     -> publishes a code, waits for guardian to enter it
+        //   GUARDIAN -> enters the user's code, creates the link
+        Role chosen = com.example.trustlock.util.RoleManager.getInstance().getRole();
+        Class<?> next;
+        if (chosen == Role.GUARDIAN) {
+            next = GuardianPairActivity.class;
+        } else {
+            next = UserPairingActivity.class;
+        }
+        startActivity(new Intent(this, next));
         finishAffinity();
     }
 

@@ -29,6 +29,9 @@ public class User {
     @SerializedName("pairing_code")
     private String pairingCode;
 
+    @SerializedName("guardian_uid")
+    private String guardianUid;
+
     public User() {}
 
     public User(String uid, String name, String email, String guardianEmail, String fcmToken) {
@@ -62,4 +65,7 @@ public class User {
 
     public String getPairingCode()          { return pairingCode; }
     public void   setPairingCode(String v)  { pairingCode = v; }
+
+    public String getGuardianUid()          { return guardianUid; }
+    public void   setGuardianUid(String v)  { guardianUid = v; }
 }
