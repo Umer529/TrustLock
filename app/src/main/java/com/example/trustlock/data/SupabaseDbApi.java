@@ -2,7 +2,9 @@ package com.example.trustlock.data;
 
 import com.example.trustlock.models.AppLimit;
 import com.example.trustlock.models.ApprovalRequest;
+import com.example.trustlock.models.CurrentApp;
 import com.example.trustlock.models.GuardianLink;
+import com.example.trustlock.models.UsageLog;
 import com.example.trustlock.models.User;
 
 import java.util.List;
@@ -65,6 +67,27 @@ public interface SupabaseDbApi {
     @DELETE("rest/v1/app_limits")
     Call<Void> deleteAppLimit(@Query("user_id") String userIdEq,
                               @Query("package_name") String packageNameEq);
+
+    // ── Current App (guardian live view) ──────────────────────────────────────
+
+    /** Returns a singleton list (one row per user) — empty if no foreground report yet. */
+    @GET("rest/v1/current_app")
+    Call<List<CurrentApp>> getCurrentApp(@Query("user_uid") String userUidEq);
+
+    // ── Usage Logs (guardian dashboard + live monitoring) ─────────────────────
+
+    /** Today's per-app usage rows for a user, sorted by the caller. */
+    @GET("rest/v1/usage_logs")
+    Call<List<UsageLog>> getUsageLogs(@Query("user_uid") String userUidEq,
+                                      @Query("log_date") String logDateEq,
+                                      @Query("order") String order);
+
+    /** Weekly aggregate: rows in [gte, lte] for the given user. */
+    @GET("rest/v1/usage_logs")
+    Call<List<UsageLog>> getUsageLogsBetween(@Query("user_uid") String userUidEq,
+                                             @Query("log_date") String gte,
+                                             @Query("log_date") String lte,
+                                             @Query("order") String order);
 
     // ── Approval Requests ──────────────────────────────────────────────────────
 

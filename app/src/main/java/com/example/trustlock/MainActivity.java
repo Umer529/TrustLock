@@ -12,15 +12,26 @@ import android.provider.Settings;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.example.trustlock.data.SupabaseClient;
+import com.example.trustlock.data.UserRepository;
 import com.example.trustlock.databinding.ActivityMainBinding;
+import com.example.trustlock.models.GuardianLink;
+import com.example.trustlock.models.Role;
 import com.example.trustlock.receiver.ScreenPactDeviceAdminReceiver;
 import com.example.trustlock.service.ScreenTimeMonitorService;
 import com.example.trustlock.ui.onboarding.RoleSelectionActivity;
 import com.example.trustlock.ui.permissions.PermissionsActivity;
 import com.example.trustlock.ui.welcome.WelcomeActivity;
+import com.example.trustlock.util.GuardianContext;
 import com.example.trustlock.util.RoleManager;
 import com.example.trustlock.util.SessionManager;
 import com.example.trustlock.util.UsageStatsHelper;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,9 +55,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // If any core permission is missing (Usage, Accessibility, Overlay,
-        // Device Admin), route to the permissions screen so the user can grant it.
-        if (!hasCorePermissions()) {
+        // Guardians don't need the local monitoring permissions (Accessibility,
+        // Overlay, Device Admin, Usage Stats) — they're viewers only. Skip the
+        // permissions gate for them.
+        Role role = RoleManager.getInstance().getRole();
+        if (role == Role.USER && !hasCorePermissions()) {
             startActivity(new Intent(this, PermissionsActivity.class));
             finish();
             return;
@@ -55,7 +68,12 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        setupViewPagerWithNav();
+        if (role == Role.GUARDIAN) {
+            setupGuardianNav();
+            loadFirstLinkedUser();
+        } else {
+            setupViewPagerWithNav();
+        }
     }
 
     private boolean hasCorePermissions() {
@@ -110,6 +128,69 @@ public class MainActivity extends AppCompatActivity {
                 binding.bottomNav.setSelectedItemId(tabIds[position]);
             }
         });
+    }
+
+    private void setupGuardianNav() {
+        binding.bottomNav.getMenu().clear();
+        binding.bottomNav.inflateMenu(R.menu.bottom_nav_guardian_menu);
+
+        binding.viewPager.setAdapter(new GuardianPagerAdapter(this));
+        binding.viewPager.setOffscreenPageLimit(4);
+
+        final int[] tabIds = {
+            R.id.guardianHomeFragment,
+            R.id.liveMonitoringFragment,
+            R.id.guardianLimitsFragment,
+            R.id.guardianApprovalsFragment,
+            R.id.guardianSettingsFragment
+        };
+
+        binding.bottomNav.setOnItemSelectedListener(item -> {
+            for (int i = 0; i < tabIds.length; i++) {
+                if (item.getItemId() == tabIds[i]) {
+                    binding.viewPager.setCurrentItem(i, true);
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        binding.viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                binding.bottomNav.setSelectedItemId(tabIds[position]);
+            }
+        });
+    }
+
+    /**
+     * Auto-pick the first linked user — the Settings tab (Step 5b) will let
+     * the guardian switch between multiple linked users.
+     */
+    private void loadFirstLinkedUser() {
+        String guardianUid = SessionManager.getInstance().getUserId();
+        if (guardianUid == null) return;
+
+        SupabaseClient.getInstance().db()
+                .getGuardianLinks("eq." + guardianUid)
+                .enqueue(new Callback<List<GuardianLink>>() {
+                    @Override public void onResponse(Call<List<GuardianLink>> call,
+                                                     Response<List<GuardianLink>> r) {
+                        if (!r.isSuccessful() || r.body() == null || r.body().isEmpty()) {
+                            GuardianContext.getInstance().setMonitored(null, null);
+                            return;
+                        }
+                        String userUid = r.body().get(0).getUserUid();
+                        new UserRepository().fetchUser(userUid, u -> {
+                            String name = (u != null && u.getName() != null)
+                                    ? u.getName() : userUid;
+                            GuardianContext.getInstance().setMonitored(userUid, name);
+                        });
+                    }
+                    @Override public void onFailure(Call<List<GuardianLink>> call, Throwable t) {
+                        GuardianContext.getInstance().setMonitored(null, null);
+                    }
+                });
     }
 
     @Override

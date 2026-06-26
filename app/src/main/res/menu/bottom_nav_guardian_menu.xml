@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Item IDs MUST match fragment IDs in nav_graph_guardian.xml. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/guardianHomeFragment"
+        android:icon="@drawable/ic_nav_home"
+        android:title="Home" />
+
+    <item
+        android:id="@+id/liveMonitoringFragment"
+        android:icon="@drawable/ic_nav_live"
+        android:title="Live" />
+
+    <item
+        android:id="@+id/guardianLimitsFragment"
+        android:icon="@drawable/ic_nav_limits"
+        android:title="Limits" />
+
+    <item
+        android:id="@+id/guardianApprovalsFragment"
+        android:icon="@drawable/ic_nav_approvals"
+        android:title="Approvals" />
+
+    <item
+        android:id="@+id/guardianSettingsFragment"
+        android:icon="@drawable/ic_nav_settings"
+        android:title="Settings" />
+
+</menu>

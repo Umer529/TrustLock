@@ -97,6 +97,9 @@ dependencies {
     // EncryptedSharedPreferences (role + sensitive cache)
     implementation(libs.security.crypto)
 
+    // MPAndroidChart (guardian top-apps horizontal bar chart)
+    implementation(libs.mpandroidchart)
+
     // Glide
     implementation(libs.glide)
     annotationProcessor(libs.glide.compiler)

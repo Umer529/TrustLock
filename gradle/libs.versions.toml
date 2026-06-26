@@ -18,6 +18,7 @@ retrofit = "2.11.0"
 okhttp = "4.12.0"
 room = "2.6.1"
 securityCrypto = "1.1.0-alpha06"
+mpAndroidChart = "v3.1.0"
 
 [libraries]
 # Test
@@ -61,6 +62,9 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 
 # EncryptedSharedPreferences for role + sensitive cache
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+
+# MPAndroidChart for guardian dashboard top-apps chart
+mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpAndroidChart" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
